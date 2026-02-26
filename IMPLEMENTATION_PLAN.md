@@ -259,9 +259,7 @@ theorem remove_liquidity_proportional
     s'.x / s.x = s'.y / s.y
 ```
 
-**THIS IS THE PITCH THRESHOLD.**
-Once Phase 3 is done, begin DeFi outreach immediately.
-Do not wait for Phases 4-6.
+Complete this phase before moving to Solidity.
 
 ---
 
@@ -405,10 +403,10 @@ Do not reorder. Each phase depends on the previous.
 Phase 1: Transitions.lean         ← write now
 Phase 2: Invariants.lean          ← after Phase 1 builds
 Phase 3: Economics.lean           ← after Phase 2 builds
-                                  ← START DEFI OUTREACH HERE
-Phase 4: Solidity + Foundry       ← can overlap with Phase 3
+Phase 4: Solidity + Foundry       ← after Phase 3 builds
 Phase 5: Refinement.lean          ← after Phases 3 and 4
 Phase 6: VERIFICATION.md + CI     ← last
+                                  ← START DEFI OUTREACH HERE
 ```
 
 ---
