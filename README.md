@@ -16,6 +16,23 @@ Run full reproduction (Lean + Solidity):
 ./scripts/repro.sh
 ```
 
+## Security Validation
+
+Run differential fuzzing + baseline test suite:
+
+```bash
+cd solidity
+~/.foundry/bin/forge test
+```
+
+Run Slither static analysis:
+
+```bash
+./scripts/security/slither.sh
+```
+
+See triaged findings in [`security/SECURITY_VALIDATION.md`](security/SECURITY_VALIDATION.md).
+
 ## What Is Proved
 
 - State validity invariants are preserved across add/remove/swap relations
