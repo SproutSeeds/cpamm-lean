@@ -158,6 +158,40 @@ theorem sim_swapXforY
     simp [hbal']
   · simp [alpha, solidityFee, hnum', hden']
 
+theorem sim_swapYforX
+    (σ σ' : SolidityStorage) (dy : ℕ)
+    (_hv : Valid (alpha σ))
+    (hstep : SoliditySwapYforX σ σ' dy) :
+    SwapYforX (alpha σ) (alpha σ') (dy : ℚ) := by
+  rcases hstep with
+    ⟨hdy_pos, _, hdx_pos, hdx_lt_reserve, hdx_exact, hresY, hresX, hL', hbal',
+      hnum', hden'⟩
+  unfold SwapYforX
+  refine ⟨by exact_mod_cast hdy_pos, ?_⟩
+  dsimp
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · have hdx_pos_q : (0 : ℚ) < (dxOutY σ dy : ℚ) := by exact_mod_cast hdx_pos
+    simpa [hdx_exact] using hdx_pos_q
+  · change (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) + (dy : ℚ)
+    exact_mod_cast hresY
+  · change (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) -
+      dy_of_swap (σ.reserveY : ℚ) (σ.reserveX : ℚ) (solidityFee σ) (dy : ℚ)
+    have hx_cast :
+        (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) - (dxOutY σ dy : ℚ) := by
+      rw [hresX, Nat.cast_sub (Nat.le_of_lt hdx_lt_reserve)]
+    simpa [hdx_exact] using hx_cast
+  · have hx_nat : 0 < σ'.reserveX := by
+      rw [hresX]
+      exact Nat.sub_pos_of_lt hdx_lt_reserve
+    change (σ'.reserveX : ℚ) > 0
+    exact_mod_cast hx_nat
+  · change (σ'.totalSupply : ℚ) = (σ.totalSupply : ℚ)
+    exact_mod_cast hL'
+  · ext a
+    change (σ'.balanceOf a : ℚ) = (σ.balanceOf a : ℚ)
+    simp [hbal']
+  · simp [alpha, solidityFee, hnum', hden']
+
 theorem sim_addLiquidity
     (σ σ' : SolidityStorage) (addr : SolAddress) (dx dy : ℕ)
     (_hv : Valid (alpha σ))

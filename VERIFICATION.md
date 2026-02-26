@@ -26,6 +26,7 @@
 
 ### `CPAMM/Refinement.lean`
 - `sim_swapXforY`
+- `sim_swapYforX`
 - `sim_addLiquidity`
 - `sim_removeLiquidity`
 
@@ -35,6 +36,7 @@ The refinement layer models Solidity storage and transitions in Lean (`SolidityS
 
 Current scope is **bounded by explicit exactness side conditions** in the Solidity relations:
 - `SoliditySwapXforY` requires the integer output cast to be exactly equal to `dy_of_swap` in rationals.
+- `SoliditySwapYforX` requires the integer output cast to be exactly equal to `dy_of_swap` in rationals (with X/Y roles swapped).
 - `SolidityAddLiquidity` requires exact share arithmetic when pool supply is nonzero.
 - `SolidityRemoveLiquidity` requires exact integer-to-rational correspondence for both reserve outputs.
 
