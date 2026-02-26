@@ -1,0 +1,76 @@
+# CPAMM-1 Verification Dossier
+
+## Proven Theorems
+
+### `CPAMM/State.lean`
+- `product_pos`
+
+### `CPAMM/Invariants.lean`
+- `valid_preserved_addLiquidity`
+- `valid_preserved_removeLiquidity`
+- `valid_preserved_swapXforY`
+- `valid_preserved_swapYforX`
+- `consistent_preserved_addLiquidity`
+- `consistent_preserved_removeLiquidity`
+
+### `CPAMM/Economics.lean`
+- `product_preserved_swap_no_fee`
+- `product_nondecreasing_swap_with_fee`
+- `output_bounded_by_reserve`
+- `remove_liquidity_proportional`
+
+### `CPAMM/Rounding.lean`
+- `nat_div_le_rat_div`
+- `rat_div_sub_one_lt_nat_div`
+- `reserves_positive_under_rounding`
+
+### `CPAMM/Refinement.lean`
+- `sim_swapXforY`
+- `sim_addLiquidity`
+- `sim_removeLiquidity`
+
+## Refinement Scope
+
+The refinement layer models Solidity storage and transitions in Lean (`SolidityStorage`, `alpha`, and `Solidity*` relations) and proves simulation into the abstract CPAMM relations.
+
+Current scope is **bounded by explicit exactness side conditions** in the Solidity relations:
+- `SoliditySwapXforY` requires the integer output cast to be exactly equal to `dy_of_swap` in rationals.
+- `SolidityAddLiquidity` requires exact share arithmetic when pool supply is nonzero.
+- `SolidityRemoveLiquidity` requires exact integer-to-rational correspondence for both reserve outputs.
+
+This means the proved simulation covers steps where floor rounding is exact (or equivalently where the relation's exactness constraints hold), not every arbitrary integer-rounded step.
+
+## Rounding Bounds
+
+From `CPAMM/Rounding.lean`:
+- `nat_div_le_rat_div`: floor division never exceeds exact rational division.
+- `rat_div_sub_one_lt_nat_div`: floor division is strictly more than exact division minus `1`.
+- `reserves_positive_under_rounding`: if the floored swap output is bounded above by the exact rational output, then post-swap reserve positivity is preserved.
+
+## Assumptions
+
+- Solidity addresses are abstracted as `SolAddress := ℕ`.
+- LP-supply accounting consistency uses finite address universes (`[Fintype α]` and `[DecidableEq α]`).
+- Solidity fee denominator is strictly positive (`h_denom_pos`).
+- Refinement theorems for add/remove/swap use the explicit exactness side conditions in their Solidity relations.
+
+## Non-goals
+
+- Flash loan protection
+- Reentrancy hardening
+- Oracle/TWAP integration
+- Gas optimization
+- Governance controls
+- Upgradeability
+
+## `sorry` Status
+
+No `sorry` appears in the CPAMM Lean development files (`CPAMM/*.lean`).
+
+## Reproduction
+
+```bash
+~/.elan/bin/lake exe cache get
+~/.elan/bin/lake build
+cd solidity && ~/.foundry/bin/forge test
+```
