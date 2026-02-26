@@ -127,7 +127,7 @@ def RemoveLiquidity {α : Type*} [DecidableEq α]
   -- Preconditions
   0 < dL ∧
   dL ≤ s.balances addr ∧
-  s.L > 0 ∧
+  dL < s.L ∧  -- strictly less: ensures x', y' stay positive after withdrawal
   -- Postconditions
   s'.x = s.x - s.x * dL / s.L ∧
   s'.y = s.y - s.y * dL / s.L ∧
@@ -162,6 +162,13 @@ def SwapXforY {α : Type*}
 Note: `addr` is not needed for swaps in the abstract model — the swap
 just changes reserves. Balances track LP tokens only, not token holdings.
 
+**Lean `let` formatting note:** Inside `Prop` definitions, use `let dx_eff := ...; ...`
+(semicolon-separated) not `let dx_eff := ...\n ...` to avoid parser issues. Example:
+```lean
+let dx_eff := dx * (1 - s.f); let dy := s.y * dx_eff / (s.x + dx_eff); dy > 0 ∧ ...
+```
+Or define `dy_of_swap` as a separate `def` and reference it directly — which is cleaner.
+
 ---
 
 ### `SwapYforX`
@@ -194,7 +201,7 @@ Also define this in `Transitions.lean`. It will be needed for invariant proofs.
 
 ```lean
 /-- A state is consistent if LP supply equals the sum of all LP balances. -/
-def Consistent {α : Type*} [Fintype α] (s : CpammState α) : Prop :=
+def Consistent {α : Type*} [DecidableEq α] [Fintype α] (s : CpammState α) : Prop :=
   s.L = Finset.univ.sum s.balances
 ```
 
