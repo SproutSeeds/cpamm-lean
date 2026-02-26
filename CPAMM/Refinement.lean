@@ -3,9 +3,8 @@ import CPAMM.Rounding
 /-!
   CPAMM-1 Phase 6: Refinement Layer
 
-  The Solidity relations below model integer arithmetic and include explicit
-  exactness side conditions where needed to connect floor arithmetic to the
-  exact rational model.
+  The Solidity relations below model integer arithmetic directly.
+  For swaps, simulation is to bounded floor-rounded abstract relations.
 -/
 
 /-- A concrete address type for Solidity refinement proofs. -/
@@ -58,14 +57,38 @@ def alpha (σ : SolidityStorage) : CpammState SolAddress :=
     balances := fun a => (σ.balanceOf a : ℚ)
     f := solidityFee σ }
 
-/-- Solidity swapXforY relation (integer arithmetic plus exactness side condition). -/
+/-- Abstract swapXforY relation with floor-rounded output bounded by the exact model output. -/
+def SwapXforYFloor {α : Type*} (s s' : CpammState α) (dx : ℚ) : Prop :=
+  dx > 0 ∧
+  ∃ dyFloor : ℕ,
+    (dyFloor : ℚ) > 0 ∧
+    (dyFloor : ℚ) ≤ dy_of_swap s.x s.y s.f dx ∧
+    s'.x = s.x + dx ∧
+    s'.y = s.y - dyFloor ∧
+    s'.y > 0 ∧
+    s'.L = s.L ∧
+    s'.balances = s.balances ∧
+    s'.f = s.f
+
+/-- Abstract swapYforX relation with floor-rounded output bounded by the exact model output. -/
+def SwapYforXFloor {α : Type*} (s s' : CpammState α) (dy : ℚ) : Prop :=
+  dy > 0 ∧
+  ∃ dxFloor : ℕ,
+    (dxFloor : ℚ) > 0 ∧
+    (dxFloor : ℚ) ≤ dy_of_swap s.y s.x s.f dy ∧
+    s'.y = s.y + dy ∧
+    s'.x = s.x - dxFloor ∧
+    s'.x > 0 ∧
+    s'.L = s.L ∧
+    s'.balances = s.balances ∧
+    s'.f = s.f
+
+/-- Solidity swapXforY relation (integer floor arithmetic). -/
 def SoliditySwapXforY (σ σ' : SolidityStorage) (dx : ℕ) : Prop :=
   dx > 0 ∧
   inputEff σ dx > 0 ∧
   dyOutX σ dx > 0 ∧
   dyOutX σ dx < σ.reserveY ∧
-  ((dyOutX σ dx : ℚ) =
-    dy_of_swap (σ.reserveX : ℚ) (σ.reserveY : ℚ) (solidityFee σ) (dx : ℚ)) ∧
   σ'.reserveX = σ.reserveX + dx ∧
   σ'.reserveY = σ.reserveY - dyOutX σ dx ∧
   σ'.totalSupply = σ.totalSupply ∧
@@ -73,14 +96,12 @@ def SoliditySwapXforY (σ σ' : SolidityStorage) (dx : ℕ) : Prop :=
   σ'.feeNumerator = σ.feeNumerator ∧
   σ'.feeDenominator = σ.feeDenominator
 
-/-- Solidity swapYforX relation (integer arithmetic plus exactness side condition). -/
+/-- Solidity swapYforX relation (integer floor arithmetic). -/
 def SoliditySwapYforX (σ σ' : SolidityStorage) (dy : ℕ) : Prop :=
   dy > 0 ∧
   inputEff σ dy > 0 ∧
   dxOutY σ dy > 0 ∧
   dxOutY σ dy < σ.reserveX ∧
-  ((dxOutY σ dy : ℚ) =
-    dy_of_swap (σ.reserveY : ℚ) (σ.reserveX : ℚ) (solidityFee σ) (dy : ℚ)) ∧
   σ'.reserveY = σ.reserveY + dy ∧
   σ'.reserveX = σ.reserveX - dxOutY σ dy ∧
   σ'.totalSupply = σ.totalSupply ∧
@@ -124,28 +145,152 @@ def SolidityRemoveLiquidity (σ σ' : SolidityStorage) (addr : SolAddress) (shar
   σ'.feeNumerator = σ.feeNumerator ∧
   σ'.feeDenominator = σ.feeDenominator
 
+theorem frac_mul_div_mono
+    (x y t1 t2 : ℚ)
+    (hx : 0 < x) (hy : 0 ≤ y) (ht1 : 0 ≤ t1) (ht1_le_t2 : t1 ≤ t2) :
+    y * t1 / (x + t1) ≤ y * t2 / (x + t2) := by
+  have ht2 : 0 ≤ t2 := le_trans ht1 ht1_le_t2
+  have hden1 : 0 < x + t1 := add_pos_of_pos_of_nonneg hx ht1
+  have hden2 : 0 < x + t2 := add_pos_of_pos_of_nonneg hx ht2
+  have hcore : t1 * (x + t2) ≤ t2 * (x + t1) := by
+    nlinarith [mul_le_mul_of_nonneg_left ht1_le_t2 (le_of_lt hx)]
+  have hcore_y : y * t1 * (x + t2) ≤ y * t2 * (x + t1) := by
+    simpa [mul_assoc] using (mul_le_mul_of_nonneg_left hcore hy)
+  have hleft :
+      (y * t1 / (x + t1)) * ((x + t1) * (x + t2)) = y * t1 * (x + t2) := by
+    field_simp [ne_of_gt hden1, ne_of_gt hden2]
+  have hright :
+      (y * t2 / (x + t2)) * ((x + t1) * (x + t2)) = y * t2 * (x + t1) := by
+    field_simp [ne_of_gt hden1, ne_of_gt hden2]
+  have hmul :
+      (y * t1 / (x + t1)) * ((x + t1) * (x + t2))
+        ≤ (y * t2 / (x + t2)) * ((x + t1) * (x + t2)) := by
+    rw [hleft, hright]
+    exact hcore_y
+  have hprod_pos : 0 < (x + t1) * (x + t2) := mul_pos hden1 hden2
+  exact le_of_mul_le_mul_right hmul hprod_pos
+
+theorem inputEff_cast_le_exact
+    (σ : SolidityStorage) (dx : ℕ)
+    (hfee_lt_one : solidityFee σ < 1) :
+    (inputEff σ dx : ℚ) ≤ (dx : ℚ) * (1 - solidityFee σ) := by
+  have hden_pos_q : 0 < (σ.feeDenominator : ℚ) := by
+    exact_mod_cast σ.h_denom_pos
+  have hnum_lt_den_q : (σ.feeNumerator : ℚ) < (σ.feeDenominator : ℚ) := by
+    have : (σ.feeNumerator : ℚ) < 1 * (σ.feeDenominator : ℚ) := by
+      exact (div_lt_iff₀ hden_pos_q).1 (by simpa [solidityFee] using hfee_lt_one)
+    simpa using this
+  have hnum_lt_den : σ.feeNumerator < σ.feeDenominator := by
+    exact_mod_cast hnum_lt_den_q
+  have hnum_le_den : σ.feeNumerator ≤ σ.feeDenominator := Nat.le_of_lt hnum_lt_den
+  have hfloor :
+      (inputEff σ dx : ℚ) ≤
+        (dx : ℚ) * ((σ.feeDenominator - σ.feeNumerator : ℕ) : ℚ) / (σ.feeDenominator : ℚ) := by
+    simpa [inputEff] using
+      (nat_div_le_rat_div
+        (dx * (σ.feeDenominator - σ.feeNumerator))
+        σ.feeDenominator
+        σ.h_denom_pos)
+  have hrewrite :
+      (dx : ℚ) * ((σ.feeDenominator - σ.feeNumerator : ℕ) : ℚ) / (σ.feeDenominator : ℚ) =
+        (dx : ℚ) * (1 - solidityFee σ) := by
+    rw [Nat.cast_sub hnum_le_den]
+    unfold solidityFee
+    field_simp [ne_of_gt hden_pos_q]
+  simpa [hrewrite] using hfloor
+
+theorem dyOutX_cast_le_dy_of_swap
+    (σ : SolidityStorage) (dx : ℕ)
+    (hv : Valid (alpha σ)) :
+    (dyOutX σ dx : ℚ) ≤
+      dy_of_swap (σ.reserveX : ℚ) (σ.reserveY : ℚ) (solidityFee σ) (dx : ℚ) := by
+  rcases hv with ⟨hx, hy, _, _, _, hf_lt_one⟩
+  have hx_nat_pos : 0 < σ.reserveX := by
+    simpa [alpha] using (show (alpha σ).x > 0 from hx)
+  have hinput_nonneg : 0 ≤ (inputEff σ dx : ℚ) := by exact_mod_cast (Nat.zero_le (inputEff σ dx))
+  have hden_nat_pos : 0 < σ.reserveX + inputEff σ dx :=
+    Nat.add_pos_left hx_nat_pos (inputEff σ dx)
+  have hfloor :
+      (dyOutX σ dx : ℚ) ≤
+        ((σ.reserveY * inputEff σ dx : ℕ) : ℚ) / ((σ.reserveX + inputEff σ dx : ℕ) : ℚ) := by
+    simpa [dyOutX] using
+      (nat_div_le_rat_div
+        (σ.reserveY * inputEff σ dx)
+        (σ.reserveX + inputEff σ dx)
+        hden_nat_pos)
+  have hinput_bound :
+      (inputEff σ dx : ℚ) ≤ (dx : ℚ) * (1 - solidityFee σ) :=
+    inputEff_cast_le_exact σ dx hf_lt_one
+  have hratio_mono :
+      (σ.reserveY : ℚ) * (inputEff σ dx : ℚ) / ((σ.reserveX : ℚ) + (inputEff σ dx : ℚ))
+        ≤
+      (σ.reserveY : ℚ) * ((dx : ℚ) * (1 - solidityFee σ)) /
+        ((σ.reserveX : ℚ) + ((dx : ℚ) * (1 - solidityFee σ))) := by
+    exact frac_mul_div_mono
+      (σ.reserveX : ℚ) (σ.reserveY : ℚ)
+      (inputEff σ dx : ℚ)
+      ((dx : ℚ) * (1 - solidityFee σ))
+      hx (le_of_lt hy) hinput_nonneg hinput_bound
+  have hfloor' :
+      (dyOutX σ dx : ℚ) ≤
+        (σ.reserveY : ℚ) * (inputEff σ dx : ℚ) / ((σ.reserveX : ℚ) + (inputEff σ dx : ℚ)) := by
+    simpa [Nat.cast_mul, Nat.cast_add] using hfloor
+  exact le_trans hfloor' (by simpa [dy_of_swap] using hratio_mono)
+
+theorem dxOutY_cast_le_dy_of_swap
+    (σ : SolidityStorage) (dy : ℕ)
+    (hv : Valid (alpha σ)) :
+    (dxOutY σ dy : ℚ) ≤
+      dy_of_swap (σ.reserveY : ℚ) (σ.reserveX : ℚ) (solidityFee σ) (dy : ℚ) := by
+  rcases hv with ⟨hx, hy, _, _, _, hf_lt_one⟩
+  have hy_nat_pos : 0 < σ.reserveY := by
+    simpa [alpha] using (show (alpha σ).y > 0 from hy)
+  have hinput_nonneg : 0 ≤ (inputEff σ dy : ℚ) := by exact_mod_cast (Nat.zero_le (inputEff σ dy))
+  have hden_nat_pos : 0 < σ.reserveY + inputEff σ dy :=
+    Nat.add_pos_left hy_nat_pos (inputEff σ dy)
+  have hfloor :
+      (dxOutY σ dy : ℚ) ≤
+        ((σ.reserveX * inputEff σ dy : ℕ) : ℚ) / ((σ.reserveY + inputEff σ dy : ℕ) : ℚ) := by
+    simpa [dxOutY] using
+      (nat_div_le_rat_div
+        (σ.reserveX * inputEff σ dy)
+        (σ.reserveY + inputEff σ dy)
+        hden_nat_pos)
+  have hinput_bound :
+      (inputEff σ dy : ℚ) ≤ (dy : ℚ) * (1 - solidityFee σ) :=
+    inputEff_cast_le_exact σ dy hf_lt_one
+  have hratio_mono :
+      (σ.reserveX : ℚ) * (inputEff σ dy : ℚ) / ((σ.reserveY : ℚ) + (inputEff σ dy : ℚ))
+        ≤
+      (σ.reserveX : ℚ) * ((dy : ℚ) * (1 - solidityFee σ)) /
+        ((σ.reserveY : ℚ) + ((dy : ℚ) * (1 - solidityFee σ))) := by
+    exact frac_mul_div_mono
+      (σ.reserveY : ℚ) (σ.reserveX : ℚ)
+      (inputEff σ dy : ℚ)
+      ((dy : ℚ) * (1 - solidityFee σ))
+      hy (le_of_lt hx) hinput_nonneg hinput_bound
+  have hfloor' :
+      (dxOutY σ dy : ℚ) ≤
+        (σ.reserveX : ℚ) * (inputEff σ dy : ℚ) / ((σ.reserveY : ℚ) + (inputEff σ dy : ℚ)) := by
+    simpa [Nat.cast_mul, Nat.cast_add] using hfloor
+  exact le_trans hfloor' (by simpa [dy_of_swap] using hratio_mono)
+
 theorem sim_swapXforY
     (σ σ' : SolidityStorage) (dx : ℕ)
-    (_hv : Valid (alpha σ))
+    (hv : Valid (alpha σ))
     (hstep : SoliditySwapXforY σ σ' dx) :
-    SwapXforY (alpha σ) (alpha σ') (dx : ℚ) := by
+    SwapXforYFloor (alpha σ) (alpha σ') (dx : ℚ) := by
   rcases hstep with
-    ⟨hdx_pos, _, hdy_pos, hdy_lt_reserve, hdy_exact, hresX, hresY, hL', hbal',
-      hnum', hden'⟩
-  unfold SwapXforY
+    ⟨hdx_pos, _, hdy_pos, hdy_lt_reserve, hresX, hresY, hL', hbal', hnum', hden'⟩
+  unfold SwapXforYFloor
   refine ⟨by exact_mod_cast hdx_pos, ?_⟩
-  dsimp
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · have hdy_pos_q : (0 : ℚ) < (dyOutX σ dx : ℚ) := by exact_mod_cast hdy_pos
-    simpa [hdy_exact] using hdy_pos_q
+  refine ⟨dyOutX σ dx, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · exact_mod_cast hdy_pos
+  · exact dyOutX_cast_le_dy_of_swap σ dx hv
   · change (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) + (dx : ℚ)
     exact_mod_cast hresX
-  · change (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) -
-      dy_of_swap (σ.reserveX : ℚ) (σ.reserveY : ℚ) (solidityFee σ) (dx : ℚ)
-    have hy_cast :
-        (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) - (dyOutX σ dx : ℚ) := by
-      rw [hresY, Nat.cast_sub (Nat.le_of_lt hdy_lt_reserve)]
-    simpa [hdy_exact] using hy_cast
+  · change (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) - (dyOutX σ dx : ℚ)
+    rw [hresY, Nat.cast_sub (Nat.le_of_lt hdy_lt_reserve)]
   · have hy_nat : 0 < σ'.reserveY := by
       rw [hresY]
       exact Nat.sub_pos_of_lt hdy_lt_reserve
@@ -153,33 +298,28 @@ theorem sim_swapXforY
     exact_mod_cast hy_nat
   · change (σ'.totalSupply : ℚ) = (σ.totalSupply : ℚ)
     exact_mod_cast hL'
-  · ext a
-    change (σ'.balanceOf a : ℚ) = (σ.balanceOf a : ℚ)
-    simp [hbal']
-  · simp [alpha, solidityFee, hnum', hden']
+  · refine ⟨?_, ?_⟩
+    · ext a
+      change (σ'.balanceOf a : ℚ) = (σ.balanceOf a : ℚ)
+      simp [hbal']
+    · simp [alpha, solidityFee, hnum', hden']
 
 theorem sim_swapYforX
     (σ σ' : SolidityStorage) (dy : ℕ)
-    (_hv : Valid (alpha σ))
+    (hv : Valid (alpha σ))
     (hstep : SoliditySwapYforX σ σ' dy) :
-    SwapYforX (alpha σ) (alpha σ') (dy : ℚ) := by
+    SwapYforXFloor (alpha σ) (alpha σ') (dy : ℚ) := by
   rcases hstep with
-    ⟨hdy_pos, _, hdx_pos, hdx_lt_reserve, hdx_exact, hresY, hresX, hL', hbal',
-      hnum', hden'⟩
-  unfold SwapYforX
+    ⟨hdy_pos, _, hdx_pos, hdx_lt_reserve, hresY, hresX, hL', hbal', hnum', hden'⟩
+  unfold SwapYforXFloor
   refine ⟨by exact_mod_cast hdy_pos, ?_⟩
-  dsimp
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · have hdx_pos_q : (0 : ℚ) < (dxOutY σ dy : ℚ) := by exact_mod_cast hdx_pos
-    simpa [hdx_exact] using hdx_pos_q
+  refine ⟨dxOutY σ dy, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · exact_mod_cast hdx_pos
+  · exact dxOutY_cast_le_dy_of_swap σ dy hv
   · change (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) + (dy : ℚ)
     exact_mod_cast hresY
-  · change (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) -
-      dy_of_swap (σ.reserveY : ℚ) (σ.reserveX : ℚ) (solidityFee σ) (dy : ℚ)
-    have hx_cast :
-        (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) - (dxOutY σ dy : ℚ) := by
-      rw [hresX, Nat.cast_sub (Nat.le_of_lt hdx_lt_reserve)]
-    simpa [hdx_exact] using hx_cast
+  · change (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) - (dxOutY σ dy : ℚ)
+    rw [hresX, Nat.cast_sub (Nat.le_of_lt hdx_lt_reserve)]
   · have hx_nat : 0 < σ'.reserveX := by
       rw [hresX]
       exact Nat.sub_pos_of_lt hdx_lt_reserve
@@ -187,10 +327,11 @@ theorem sim_swapYforX
     exact_mod_cast hx_nat
   · change (σ'.totalSupply : ℚ) = (σ.totalSupply : ℚ)
     exact_mod_cast hL'
-  · ext a
-    change (σ'.balanceOf a : ℚ) = (σ.balanceOf a : ℚ)
-    simp [hbal']
-  · simp [alpha, solidityFee, hnum', hden']
+  · refine ⟨?_, ?_⟩
+    · ext a
+      change (σ'.balanceOf a : ℚ) = (σ.balanceOf a : ℚ)
+      simp [hbal']
+    · simp [alpha, solidityFee, hnum', hden']
 
 theorem sim_addLiquidity
     (σ σ' : SolidityStorage) (addr : SolAddress) (dx dy : ℕ)

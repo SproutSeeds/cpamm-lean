@@ -52,5 +52,4 @@ scripts/repro.sh
 ## Notes On Scope
 
 This is a minimal verifiable AMM core artifact (no oracle/TWAP/governance/upgrade logic).
-Refinement currently uses explicit exactness side conditions for integer-to-rational correspondence, documented in [`VERIFICATION.md`](VERIFICATION.md).
-
+Swap refinement is floor-rounded with explicit output bounds; add/remove refinement currently uses explicit exactness side conditions, documented in [`VERIFICATION.md`](VERIFICATION.md).

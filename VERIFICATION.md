@@ -35,12 +35,11 @@
 The refinement layer models Solidity storage and transitions in Lean (`SolidityStorage`, `alpha`, and `Solidity*` relations) and proves simulation into the abstract CPAMM relations.
 
 Current scope is **bounded by explicit exactness side conditions** in the Solidity relations:
-- `SoliditySwapXforY` requires the integer output cast to be exactly equal to `dy_of_swap` in rationals.
-- `SoliditySwapYforX` requires the integer output cast to be exactly equal to `dy_of_swap` in rationals (with X/Y roles swapped).
+- `SoliditySwapXforY` and `SoliditySwapYforX` are modeled with pure integer floor arithmetic and are proved against bounded abstract swap relations (`SwapXforYFloor`, `SwapYforXFloor`), where floored outputs are bounded above by the exact `dy_of_swap`.
 - `SolidityAddLiquidity` requires exact share arithmetic when pool supply is nonzero.
 - `SolidityRemoveLiquidity` requires exact integer-to-rational correspondence for both reserve outputs.
 
-This means the proved simulation covers steps where floor rounding is exact (or equivalently where the relation's exactness constraints hold), not every arbitrary integer-rounded step.
+This means swap refinement now covers arbitrary integer-rounded swap steps with explicit output bounds, while add/remove refinement still uses explicit exactness constraints.
 
 ## Rounding Bounds
 
@@ -54,7 +53,7 @@ From `CPAMM/Rounding.lean`:
 - Solidity addresses are abstracted as `SolAddress := ℕ`.
 - LP-supply accounting consistency uses finite address universes (`[Fintype α]` and `[DecidableEq α]`).
 - Solidity fee denominator is strictly positive (`h_denom_pos`).
-- Refinement theorems for add/remove/swap use the explicit exactness side conditions in their Solidity relations.
+- Add/remove refinement theorems use explicit exactness side conditions in their Solidity relations.
 
 ## Non-goals
 
