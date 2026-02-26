@@ -146,7 +146,7 @@ theorem consistent_preserved_addLiquidity
     simp [Finset.sum_add_distrib]
   calc
     s'.L = s.L + minted := by simp [minted]
-    _ = Finset.univ.sum s.balances + minted := by simpa [hc]
+    _ = Finset.univ.sum s.balances + minted := by simp [hc]
     _ = Finset.univ.sum s.balances + Finset.univ.sum (fun a : α => if a = addr then minted else (0 : ℚ)) := by
       rw [hsum_delta]
     _ = Finset.univ.sum (fun a : α => s.balances a + (if a = addr then minted else (0 : ℚ))) := by
@@ -187,7 +187,7 @@ theorem consistent_preserved_removeLiquidity
   calc
     s'.L = s.L + burned := by
       simpa [burned, sub_eq_add_neg] using hL'
-    _ = Finset.univ.sum s.balances + burned := by simpa [hc]
+    _ = Finset.univ.sum s.balances + burned := by simp [hc]
     _ = Finset.univ.sum s.balances + Finset.univ.sum (fun a : α => if a = addr then burned else (0 : ℚ)) := by
       rw [hsum_delta]
     _ = Finset.univ.sum (fun a : α => s.balances a + (if a = addr then burned else (0 : ℚ))) := by

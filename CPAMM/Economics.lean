@@ -17,7 +17,7 @@ theorem product_preserved_swap_no_fee
   have hden_ne : s.x + dx ≠ 0 := ne_of_gt hden_pos
   calc
     product s' = (s.x + dx) * (s.y - dy_of_swap s.x s.y 0 dx) := by
-      simpa [product, hx', hy', hf]
+      simp [product, hx', hy', hf]
     _ = s.x * s.y := by
       simp [dy_of_swap]
       field_simp [hden_ne]
@@ -56,7 +56,7 @@ theorem product_nondecreasing_swap_with_fee
       product s' = s.x * s.y * ((s.x + dx) / den) := by
     calc
       product s' = (s.x + dx) * (s.y - dy_of_swap s.x s.y s.f dx) := by
-        simpa [product, hx', hy']
+        simp [product, hx', hy']
       _ = s.x * s.y * ((s.x + dx) / den) := by
         unfold den
         simp [dy_of_swap]
@@ -65,7 +65,7 @@ theorem product_nondecreasing_swap_with_fee
   calc
     product s = s.x * s.y := by simp [product]
     _ ≤ s.x * s.y * ((s.x + dx) / den) := hscaled
-    _ = product s' := by simpa [hprod_formula]
+    _ = product s' := by simp [hprod_formula]
 
 theorem output_bounded_by_reserve
     {α : Type*} (s s' : CpammState α) (dx : ℚ)
