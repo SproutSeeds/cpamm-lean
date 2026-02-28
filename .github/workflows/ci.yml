@@ -72,22 +72,24 @@ jobs:
               sys.exit(1)
 
           vals = re.findall(r"([0-9]+(?:\.[0-9]+)?)%", line)
-          if len(vals) < 2:
+          if len(vals) < 3:
               print(f"error: could not parse coverage percentages from line: {line}")
               sys.exit(1)
 
           line_cov = float(vals[0])
           stmt_cov = float(vals[1])
-          if line_cov < 100.0 or stmt_cov < 100.0:
+          branch_cov = float(vals[2])
+          min_branch_cov = 56.0
+          if line_cov < 100.0 or stmt_cov < 100.0 or branch_cov < min_branch_cov:
               print(
                   f"error: coverage regression for src/CPAMM.sol "
-                  f"(lines={line_cov:.2f}%, statements={stmt_cov:.2f}%)"
+                  f"(lines={line_cov:.2f}%, statements={stmt_cov:.2f}%, branches={branch_cov:.2f}%)"
               )
               sys.exit(1)
 
           print(
               f"coverage gate passed for src/CPAMM.sol "
-              f"(lines={line_cov:.2f}%, statements={stmt_cov:.2f}%)"
+              f"(lines={line_cov:.2f}%, statements={stmt_cov:.2f}%, branches={branch_cov:.2f}%)"
           )
           PY
       - name: Solidity summary

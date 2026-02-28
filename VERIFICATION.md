@@ -32,6 +32,7 @@
 - `sim_removeLiquidity`
 - `valid_preserved_swapXforYFloor`
 - `valid_preserved_swapYforXFloor`
+- `valid_preserved_addLiquidityFloor`
 - `valid_preserved_removeLiquidityFloor`
 - `valid_preserved_soliditySwapXforY`
 - `valid_preserved_soliditySwapYforX`
@@ -66,7 +67,7 @@ From `CPAMM/Rounding.lean`:
   - Solidity tests
   - Slither security gate
 - External-review assumptions and threat-model notes are documented in `security/AUDIT_README.md`.
-- CI also enforces coverage regression protection for `solidity/src/CPAMM.sol` (line and statement coverage must remain `100%`) and uploads Slither SARIF to GitHub Security.
+- CI also enforces coverage regression protection for `solidity/src/CPAMM.sol` (line and statement coverage must remain `100%`, branch coverage must stay above a configured floor) and uploads Slither SARIF to GitHub Security.
 
 ## Assumptions
 

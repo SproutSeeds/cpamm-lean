@@ -93,6 +93,7 @@ def AddLiquidityFloor {α : Type*} [DecidableEq α]
   s'.y = s.y + dy ∧
   (if s.L = 0 then s'.L = dx
    else s'.L ≤ s.L + s.L * dx / s.x ∧ s'.L > s.L + s.L * dx / s.x - 1) ∧
+  s'.L > s.L ∧
   s'.balances addr = s.balances addr + (s'.L - s.L) ∧
   (∀ a : α, a ≠ addr → s'.balances a = s.balances a) ∧
   s'.f = s.f
@@ -367,11 +368,11 @@ theorem sim_addLiquidity
     ∃ dx' dy' : ℚ, AddLiquidityFloor (alpha σ) (alpha σ') addr dx' dy' := by
   rcases hv with ⟨hx, _, _, _, _, _⟩
   rcases hstep with
-    ⟨hdx_pos, hdy_pos, hprop, _, hresX, hresY, hL', hbal_addr',
+    ⟨hdx_pos, hdy_pos, hprop, hminted_pos, hresX, hresY, hL', hbal_addr',
       hbal_other', hnum', hden'⟩
   refine ⟨(dx : ℚ), (dy : ℚ), ?_⟩
   unfold AddLiquidityFloor
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact_mod_cast hdx_pos
   · exact_mod_cast hdy_pos
   · intro hL_pos
@@ -417,6 +418,13 @@ theorem sim_addLiquidity
       constructor
       · linarith [htotal_q, hfloor_le]
       · linarith [htotal_q, hfloor_gt]
+  · change (σ'.totalSupply : ℚ) > (σ.totalSupply : ℚ)
+    have hminted_q : (0 : ℚ) < (mintedShares σ dx : ℚ) := by
+      exact_mod_cast hminted_pos
+    have htotal_q :
+        (σ'.totalSupply : ℚ) = (σ.totalSupply : ℚ) + (mintedShares σ dx : ℚ) := by
+      exact_mod_cast hL'
+    linarith [htotal_q, hminted_q]
   · change (σ'.balanceOf addr : ℚ) =
       (σ.balanceOf addr : ℚ) + ((σ'.totalSupply : ℚ) - (σ.totalSupply : ℚ))
     have hbal_q :
@@ -603,6 +611,32 @@ theorem valid_preserved_swapYforXFloor
   · simpa [hf'] using hf_nonneg
   · simpa [hf'] using hf_lt_one
 
+theorem valid_preserved_addLiquidityFloor
+    {α : Type*} [DecidableEq α] (s s' : CpammState α) (addr : α) (dx dy : ℚ)
+    (hv : Valid s)
+    (ht : AddLiquidityFloor s s' addr dx dy) :
+    Valid s' := by
+  rcases hv with ⟨hx, hy, hL_nonneg, hbal_nonneg, hf_nonneg, hf_lt_one⟩
+  rcases ht with
+    ⟨hdx_pos, hdy_pos, _hprop, hx', hy', _hL_bounds, hL_increase, hbal_addr', hbal_other', hf'⟩
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+  · linarith [hx, hdx_pos, hx']
+  · linarith [hy, hdy_pos, hy']
+  · linarith [hL_nonneg, hL_increase]
+  · intro a
+    by_cases ha : a = addr
+    · subst ha
+      have hdelta_nonneg : 0 ≤ s'.L - s.L := by linarith [hL_increase]
+      have hbal_addr_nonneg : 0 ≤ s.balances a := hbal_nonneg a
+      have hsum_nonneg : 0 ≤ s.balances a + (s'.L - s.L) :=
+        add_nonneg hbal_addr_nonneg hdelta_nonneg
+      rw [hbal_addr']
+      exact hsum_nonneg
+    · have hbal_a_nonneg : 0 ≤ s.balances a := hbal_nonneg a
+      linarith [hbal_other' a ha, hbal_a_nonneg]
+  · simpa [hf'] using hf_nonneg
+  · simpa [hf'] using hf_lt_one
+
 theorem valid_preserved_removeLiquidityFloor
     {α : Type*} [DecidableEq α] (s s' : CpammState α) (addr : α) (dL : ℚ)
     (hv : Valid s)
@@ -649,36 +683,10 @@ theorem valid_preserved_solidityAddLiquidity
     (hv : Valid (alpha σ))
     (hstep : SolidityAddLiquidity σ σ' addr dx dy) :
     Valid (alpha σ') := by
-  rcases hv with ⟨_hx, _hy, _hL_nonneg, _hbal_nonneg, hf_nonneg, hf_lt_one⟩
-  rcases hstep with
-    ⟨hdx_pos, hdy_pos, _hprop, _hminted_pos, hresX, hresY, hL', hbal_addr',
-      hbal_other', hnum', hden'⟩
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
-  · have hx_nat : 0 < σ'.reserveX := by
-      rw [hresX]
-      exact Nat.add_pos_right σ.reserveX hdx_pos
-    change (σ'.reserveX : ℚ) > 0
-    exact_mod_cast hx_nat
-  · have hy_nat : 0 < σ'.reserveY := by
-      rw [hresY]
-      exact Nat.add_pos_right σ.reserveY hdy_pos
-    change (σ'.reserveY : ℚ) > 0
-    exact_mod_cast hy_nat
-  · change (σ'.totalSupply : ℚ) ≥ 0
-    rw [hL']
-    exact_mod_cast (Nat.zero_le (σ.totalSupply + mintedShares σ dx))
-  · intro a
-    by_cases ha : a = addr
-    · change (σ'.balanceOf a : ℚ) ≥ 0
-      have hbal_addr'_a : σ'.balanceOf a = σ.balanceOf a + mintedShares σ dx := by
-        simpa [ha] using hbal_addr'
-      rw [hbal_addr'_a]
-      exact_mod_cast (Nat.zero_le (σ.balanceOf a + mintedShares σ dx))
-    · change (σ'.balanceOf a : ℚ) ≥ 0
-      rw [hbal_other' a ha]
-      exact_mod_cast (Nat.zero_le (σ.balanceOf a))
-  · simpa [alpha, solidityFee, hnum', hden'] using hf_nonneg
-  · simpa [alpha, solidityFee, hnum', hden'] using hf_lt_one
+  rcases sim_addLiquidity σ σ' addr dx dy hv hstep with ⟨dx', dy', hsim⟩
+  exact valid_preserved_addLiquidityFloor
+    (s := alpha σ) (s' := alpha σ') (addr := addr) (dx := dx') (dy := dy')
+    hv hsim
 
 theorem valid_preserved_solidityRemoveLiquidity
     (σ σ' : SolidityStorage) (addr : SolAddress) (dL : ℕ)
