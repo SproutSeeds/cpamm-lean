@@ -69,4 +69,4 @@ scripts/repro.sh
 ## Notes On Scope
 
 This is a minimal verifiable AMM core artifact (no oracle/TWAP/governance/upgrade logic).
-Swap refinement is floor-rounded with explicit output bounds; add/remove refinement currently uses explicit exactness side conditions, documented in [`VERIFICATION.md`](VERIFICATION.md).
+Refinement for swaps and liquidity operations is modeled with integer-floor arithmetic and explicit ±1 bounds against exact rational quantities, documented in [`VERIFICATION.md`](VERIFICATION.md).

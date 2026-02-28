@@ -83,6 +83,40 @@ def SwapYforXFloor {α : Type*} (s s' : CpammState α) (dy : ℚ) : Prop :=
     s'.balances = s.balances ∧
     s'.f = s.f
 
+/-- Abstract addLiquidity relation with floor-bounded LP minting. -/
+def AddLiquidityFloor {α : Type*} [DecidableEq α]
+    (s s' : CpammState α) (addr : α) (dx dy : ℚ) : Prop :=
+  dx > 0 ∧
+  dy > 0 ∧
+  (s.L > 0 → dx * s.y = dy * s.x) ∧
+  s'.x = s.x + dx ∧
+  s'.y = s.y + dy ∧
+  (if s.L = 0 then s'.L = dx
+   else s'.L ≤ s.L + s.L * dx / s.x ∧ s'.L > s.L + s.L * dx / s.x - 1) ∧
+  s'.balances addr = s.balances addr + (s'.L - s.L) ∧
+  (∀ a : α, a ≠ addr → s'.balances a = s.balances a) ∧
+  s'.f = s.f
+
+/-- Abstract removeLiquidity relation with floor-bounded reserve outputs. -/
+def RemoveLiquidityFloor {α : Type*} [DecidableEq α]
+    (s s' : CpammState α) (addr : α) (dL : ℚ) : Prop :=
+  0 < dL ∧
+  dL ≤ s.balances addr ∧
+  dL < s.L ∧
+  ∃ outX outY : ℕ,
+    (outX : ℚ) ≤ s.x * dL / s.L ∧
+    s.x * dL / s.L - 1 < (outX : ℚ) ∧
+    (outY : ℚ) ≤ s.y * dL / s.L ∧
+    s.y * dL / s.L - 1 < (outY : ℚ) ∧
+    s'.x = s.x - outX ∧
+    s'.y = s.y - outY ∧
+    s'.x > 0 ∧
+    s'.y > 0 ∧
+    s'.L = s.L - dL ∧
+    s'.balances addr = s.balances addr - dL ∧
+    (∀ a : α, a ≠ addr → s'.balances a = s.balances a) ∧
+    s'.f = s.f
+
 /-- Solidity swapXforY relation (integer floor arithmetic). -/
 def SoliditySwapXforY (σ σ' : SolidityStorage) (dx : ℕ) : Prop :=
   dx > 0 ∧
@@ -109,14 +143,11 @@ def SoliditySwapYforX (σ σ' : SolidityStorage) (dy : ℕ) : Prop :=
   σ'.feeNumerator = σ.feeNumerator ∧
   σ'.feeDenominator = σ.feeDenominator
 
-/-- Solidity addLiquidity relation with explicit share exactness side condition. -/
+/-- Solidity addLiquidity relation (integer floor arithmetic). -/
 def SolidityAddLiquidity (σ σ' : SolidityStorage) (addr : SolAddress) (dx dy : ℕ) : Prop :=
   dx > 0 ∧
   dy > 0 ∧
   (σ.totalSupply > 0 → dx * σ.reserveY = dy * σ.reserveX) ∧
-  (σ.totalSupply = 0 ∨
-    ((mintedShares σ dx : ℚ) =
-      (σ.totalSupply : ℚ) * (dx : ℚ) / (σ.reserveX : ℚ))) ∧
   mintedShares σ dx > 0 ∧
   σ'.reserveX = σ.reserveX + dx ∧
   σ'.reserveY = σ.reserveY + dy ∧
@@ -126,17 +157,13 @@ def SolidityAddLiquidity (σ σ' : SolidityStorage) (addr : SolAddress) (dx dy :
   σ'.feeNumerator = σ.feeNumerator ∧
   σ'.feeDenominator = σ.feeDenominator
 
-/-- Solidity removeLiquidity relation with explicit exactness side conditions. -/
+/-- Solidity removeLiquidity relation (integer floor arithmetic). -/
 def SolidityRemoveLiquidity (σ σ' : SolidityStorage) (addr : SolAddress) (shares : ℕ) : Prop :=
   0 < shares ∧
   shares ≤ σ.balanceOf addr ∧
   shares < σ.totalSupply ∧
   removeX σ shares ≤ σ.reserveX ∧
   removeY σ shares ≤ σ.reserveY ∧
-  ((removeX σ shares : ℚ) =
-    (σ.reserveX : ℚ) * (shares : ℚ) / (σ.totalSupply : ℚ)) ∧
-  ((removeY σ shares : ℚ) =
-    (σ.reserveY : ℚ) * (shares : ℚ) / (σ.totalSupply : ℚ)) ∧
   σ'.reserveX = σ.reserveX - removeX σ shares ∧
   σ'.reserveY = σ.reserveY - removeY σ shares ∧
   σ'.totalSupply = σ.totalSupply - shares ∧
@@ -335,14 +362,15 @@ theorem sim_swapYforX
 
 theorem sim_addLiquidity
     (σ σ' : SolidityStorage) (addr : SolAddress) (dx dy : ℕ)
-    (_hv : Valid (alpha σ))
+    (hv : Valid (alpha σ))
     (hstep : SolidityAddLiquidity σ σ' addr dx dy) :
-    ∃ dx' dy' : ℚ, AddLiquidity (alpha σ) (alpha σ') addr dx' dy' := by
+    ∃ dx' dy' : ℚ, AddLiquidityFloor (alpha σ) (alpha σ') addr dx' dy' := by
+  rcases hv with ⟨hx, _, _, _, _, _⟩
   rcases hstep with
-    ⟨hdx_pos, hdy_pos, hprop, hshares_exact, _, hresX, hresY, hL', hbal_addr',
+    ⟨hdx_pos, hdy_pos, hprop, _, hresX, hresY, hL', hbal_addr',
       hbal_other', hnum', hden'⟩
   refine ⟨(dx : ℚ), (dy : ℚ), ?_⟩
-  unfold AddLiquidity
+  unfold AddLiquidityFloor
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact_mod_cast hdx_pos
   · exact_mod_cast hdy_pos
@@ -356,28 +384,39 @@ theorem sim_addLiquidity
     exact_mod_cast hresX
   · change (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) + (dy : ℚ)
     exact_mod_cast hresY
-  · change (σ'.totalSupply : ℚ) =
-      if (σ.totalSupply : ℚ) = 0 then (dx : ℚ)
-      else (σ.totalSupply : ℚ) + (σ.totalSupply : ℚ) * (dx : ℚ) / (σ.reserveX : ℚ)
+  · change
+      (if (σ.totalSupply : ℚ) = 0 then
+          (σ'.totalSupply : ℚ) = (dx : ℚ)
+        else
+          (σ'.totalSupply : ℚ) ≤
+            (σ.totalSupply : ℚ) + (σ.totalSupply : ℚ) * (dx : ℚ) / (σ.reserveX : ℚ) ∧
+          (σ'.totalSupply : ℚ) >
+            (σ.totalSupply : ℚ) + (σ.totalSupply : ℚ) * (dx : ℚ) / (σ.reserveX : ℚ) - 1)
     by_cases hL0 : σ.totalSupply = 0
     · have htotal0 : σ'.totalSupply = dx := by
         simpa [mintedShares, hL0] using hL'
       have hcast0 : (σ'.totalSupply : ℚ) = (dx : ℚ) := by exact_mod_cast htotal0
-      simpa [hL0] using hcast0
-    · have hshares_q :
-          (mintedShares σ dx : ℚ) =
+      have hL0q : (σ.totalSupply : ℚ) = 0 := by exact_mod_cast hL0
+      simpa [hL0q] using hcast0
+    · have hx_nat_pos : 0 < σ.reserveX := by
+        simpa [alpha] using (show (alpha σ).x > 0 from hx)
+      have hfloor_le :
+          (mintedShares σ dx : ℚ) ≤
             (σ.totalSupply : ℚ) * (dx : ℚ) / (σ.reserveX : ℚ) := by
-        rcases hshares_exact with hzero | hq
-        · exact (hL0 hzero).elim
-        · exact hq
+        simpa [mintedShares, hL0, Nat.cast_mul, mul_assoc, mul_comm, mul_left_comm] using
+          (nat_div_le_rat_div (σ.totalSupply * dx) σ.reserveX hx_nat_pos)
+      have hfloor_gt :
+          (σ.totalSupply : ℚ) * (dx : ℚ) / (σ.reserveX : ℚ) - 1 < (mintedShares σ dx : ℚ) := by
+        simpa [mintedShares, hL0, Nat.cast_mul, mul_assoc, mul_comm, mul_left_comm] using
+          (rat_div_sub_one_lt_nat_div (σ.totalSupply * dx) σ.reserveX hx_nat_pos)
       have htotal_q :
           (σ'.totalSupply : ℚ) = (σ.totalSupply : ℚ) + (mintedShares σ dx : ℚ) := by
         exact_mod_cast hL'
-      have htarget :
-          (σ'.totalSupply : ℚ) =
-            (σ.totalSupply : ℚ) + (σ.totalSupply : ℚ) * (dx : ℚ) / (σ.reserveX : ℚ) := by
-        linarith [htotal_q, hshares_q]
-      simpa [hL0] using htarget
+      have hL0q : (σ.totalSupply : ℚ) ≠ 0 := by exact_mod_cast hL0
+      simp [hL0q]
+      constructor
+      · linarith [htotal_q, hfloor_le]
+      · linarith [htotal_q, hfloor_gt]
   · change (σ'.balanceOf addr : ℚ) =
       (σ.balanceOf addr : ℚ) + ((σ'.totalSupply : ℚ) - (σ.totalSupply : ℚ))
     have hbal_q :
@@ -394,37 +433,91 @@ theorem sim_addLiquidity
 
 theorem sim_removeLiquidity
     (σ σ' : SolidityStorage) (addr : SolAddress) (dL : ℕ)
-    (_hv : Valid (alpha σ))
+    (hv : Valid (alpha σ))
     (hstep : SolidityRemoveLiquidity σ σ' addr dL) :
-    ∃ dL' : ℚ, RemoveLiquidity (alpha σ) (alpha σ') addr dL' := by
+    ∃ dL' : ℚ, RemoveLiquidityFloor (alpha σ) (alpha σ') addr dL' := by
+  rcases hv with ⟨hx, hy, _, _, _, _⟩
   rcases hstep with
-    ⟨hdL_pos, hdL_le_bal, hdL_lt_supply, hdx_le, hdy_le, hdx_exact, hdy_exact,
+    ⟨hdL_pos, hdL_le_bal, hdL_lt_supply, _hdx_le, _hdy_le,
       hresX, hresY, hL', hbal_addr', hbal_other', hnum', hden'⟩
+  have hL_nat_pos : 0 < σ.totalSupply := lt_trans hdL_pos hdL_lt_supply
+  have hL_q_pos : 0 < (σ.totalSupply : ℚ) := by exact_mod_cast hL_nat_pos
+  have hfloor_x_le :
+      (removeX σ dL : ℚ) ≤ (σ.reserveX : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ) := by
+    simpa [removeX, Nat.cast_mul, mul_assoc, mul_comm, mul_left_comm] using
+      (nat_div_le_rat_div (σ.reserveX * dL) σ.totalSupply hL_nat_pos)
+  have hfloor_y_le :
+      (removeY σ dL : ℚ) ≤ (σ.reserveY : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ) := by
+    simpa [removeY, Nat.cast_mul, mul_assoc, mul_comm, mul_left_comm] using
+      (nat_div_le_rat_div (σ.reserveY * dL) σ.totalSupply hL_nat_pos)
+  have hfloor_x_gt :
+      (σ.reserveX : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ) - 1 < (removeX σ dL : ℚ) := by
+    simpa [removeX, Nat.cast_mul, mul_assoc, mul_comm, mul_left_comm] using
+      (rat_div_sub_one_lt_nat_div (σ.reserveX * dL) σ.totalSupply hL_nat_pos)
+  have hfloor_y_gt :
+      (σ.reserveY : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ) - 1 < (removeY σ dL : ℚ) := by
+    simpa [removeY, Nat.cast_mul, mul_assoc, mul_comm, mul_left_comm] using
+      (rat_div_sub_one_lt_nat_div (σ.reserveY * dL) σ.totalSupply hL_nat_pos)
+  have hdL_q_lt : (dL : ℚ) < (σ.totalSupply : ℚ) := by exact_mod_cast hdL_lt_supply
+  have hratio_lt_one : (dL : ℚ) / (σ.totalSupply : ℚ) < 1 := by
+    have : (dL : ℚ) < 1 * (σ.totalSupply : ℚ) := by simpa using hdL_q_lt
+    exact (div_lt_iff₀ hL_q_pos).2 this
+  have hexact_x_lt :
+      (σ.reserveX : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ) < (σ.reserveX : ℚ) := by
+    have hmul : (σ.reserveX : ℚ) * ((dL : ℚ) / (σ.totalSupply : ℚ)) < (σ.reserveX : ℚ) * 1 :=
+      mul_lt_mul_of_pos_left hratio_lt_one hx
+    calc
+      (σ.reserveX : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ)
+          = (σ.reserveX : ℚ) * ((dL : ℚ) / (σ.totalSupply : ℚ)) := by ring
+      _ < (σ.reserveX : ℚ) * 1 := hmul
+      _ = (σ.reserveX : ℚ) := by ring
+  have hexact_y_lt :
+      (σ.reserveY : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ) < (σ.reserveY : ℚ) := by
+    have hmul : (σ.reserveY : ℚ) * ((dL : ℚ) / (σ.totalSupply : ℚ)) < (σ.reserveY : ℚ) * 1 :=
+      mul_lt_mul_of_pos_left hratio_lt_one hy
+    calc
+      (σ.reserveY : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ)
+          = (σ.reserveY : ℚ) * ((dL : ℚ) / (σ.totalSupply : ℚ)) := by ring
+      _ < (σ.reserveY : ℚ) * 1 := hmul
+      _ = (σ.reserveY : ℚ) := by ring
+  have hOutX_cast_lt : (removeX σ dL : ℚ) < (σ.reserveX : ℚ) :=
+    lt_of_le_of_lt hfloor_x_le hexact_x_lt
+  have hOutY_cast_lt : (removeY σ dL : ℚ) < (σ.reserveY : ℚ) :=
+    lt_of_le_of_lt hfloor_y_le hexact_y_lt
+  have hOutX_nat_lt : removeX σ dL < σ.reserveX := by exact_mod_cast hOutX_cast_lt
+  have hOutY_nat_lt : removeY σ dL < σ.reserveY := by exact_mod_cast hOutY_cast_lt
   refine ⟨(dL : ℚ), ?_⟩
-  unfold RemoveLiquidity
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  unfold RemoveLiquidityFloor
+  refine ⟨?_, ?_, ?_, removeX σ dL, removeY σ dL, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact_mod_cast hdL_pos
   · change (dL : ℚ) ≤ (σ.balanceOf addr : ℚ)
     exact_mod_cast hdL_le_bal
   · change (dL : ℚ) < (σ.totalSupply : ℚ)
     exact_mod_cast hdL_lt_supply
-  · change (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) -
-      (σ.reserveX : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ)
-    have hx_cast :
-        (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) - (removeX σ dL : ℚ) := by
-      rw [hresX, Nat.cast_sub hdx_le]
-    linarith [hx_cast, hdx_exact]
-  · change (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) -
-      (σ.reserveY : ℚ) * (dL : ℚ) / (σ.totalSupply : ℚ)
-    have hy_cast :
-        (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) - (removeY σ dL : ℚ) := by
-      rw [hresY, Nat.cast_sub hdy_le]
-    linarith [hy_cast, hdy_exact]
+  · exact hfloor_x_le
+  · exact hfloor_x_gt
+  · exact hfloor_y_le
+  · exact hfloor_y_gt
+  · change (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) - (removeX σ dL : ℚ)
+    rw [hresX, Nat.cast_sub (Nat.le_of_lt hOutX_nat_lt)]
+  · change (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) - (removeY σ dL : ℚ)
+    rw [hresY, Nat.cast_sub (Nat.le_of_lt hOutY_nat_lt)]
+  · have hx_nat : 0 < σ'.reserveX := by
+      rw [hresX]
+      exact Nat.sub_pos_of_lt hOutX_nat_lt
+    change (σ'.reserveX : ℚ) > 0
+    exact_mod_cast hx_nat
+  · have hy_nat : 0 < σ'.reserveY := by
+      rw [hresY]
+      exact Nat.sub_pos_of_lt hOutY_nat_lt
+    change (σ'.reserveY : ℚ) > 0
+    exact_mod_cast hy_nat
   · change (σ'.totalSupply : ℚ) = (σ.totalSupply : ℚ) - (dL : ℚ)
     rw [hL', Nat.cast_sub (Nat.le_of_lt hdL_lt_supply)]
   · change (σ'.balanceOf addr : ℚ) = (σ.balanceOf addr : ℚ) - (dL : ℚ)
     rw [hbal_addr', Nat.cast_sub hdL_le_bal]
-  · intro a ha
-    change (σ'.balanceOf a : ℚ) = (σ.balanceOf a : ℚ)
-    exact_mod_cast (hbal_other' a ha)
-  · simp [alpha, solidityFee, hnum', hden']
+  · refine ⟨?_, ?_⟩
+    · intro a ha
+      change (σ'.balanceOf a : ℚ) = (σ.balanceOf a : ℚ)
+      exact_mod_cast (hbal_other' a ha)
+    · simp [alpha, solidityFee, hnum', hden']
