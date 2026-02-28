@@ -48,6 +48,15 @@ From `CPAMM/Rounding.lean`:
 - `rat_div_sub_one_lt_nat_div`: floor division is strictly more than exact division minus `1`.
 - `reserves_positive_under_rounding`: if the floored swap output is bounded above by the exact rational output, then post-swap reserve positivity is preserved.
 
+## External Validation
+
+- Foundry test suites include baseline unit/fuzz tests plus differential shadow-model fuzzing for swap/add/remove and mixed-operation traces (`solidity/test/CPAMM*.t.sol`).
+- Security static analysis is run via `scripts/security/slither.sh` in fail-on-findings mode, with only two explicitly triaged exclusions (`divide-before-multiply`, `solc-version`).
+- CI (`.github/workflows/ci.yml`) runs three gates on push/PR:
+  - Lean build
+  - Solidity tests
+  - Slither security gate
+
 ## Assumptions
 
 - Solidity addresses are abstracted as `SolAddress := ℕ`.
@@ -74,4 +83,5 @@ No `sorry` appears in the CPAMM Lean development files (`CPAMM/*.lean`).
 ~/.elan/bin/lake exe cache get
 ~/.elan/bin/lake build
 cd solidity && ~/.foundry/bin/forge test
+./scripts/security/slither.sh
 ```
