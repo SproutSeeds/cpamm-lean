@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VENV_DIR="$ROOT_DIR/.venv-security"
 SLITHER_VERSION="0.11.4"
-ACCEPTED_DETECTORS="divide-before-multiply,solc-version"
+ACCEPTED_DETECTORS="divide-before-multiply"
 
 if [[ ! -d "$VENV_DIR" ]]; then
   python3 -m venv "$VENV_DIR"

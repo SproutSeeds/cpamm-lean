@@ -49,17 +49,15 @@ Command executed:
 
 Observed detector findings:
 1. `divide-before-multiply` (swap functions)
-2. `solc-version` warning for `0.8.20` and known compiler issues listed by Slither
 
 Triage:
 - `divide-before-multiply`: **accepted / intentional** in this artifact.
   The fee model intentionally floors effective input before output computation, matching both the Solidity implementation and refinement strategy.
-- `solc-version`: **accepted / tracked** for this phase.
-  This is currently documented as a known compiler-version warning.
+- `solc-version`: **resolved** by upgrading to exact compiler pin `0.8.30`.
 
 CI gate behavior:
 - `scripts/security/slither.sh` runs Slither in fail-on-findings mode (`--fail-pedantic`).
-- The two triaged detectors above are excluded explicitly via `--exclude`.
+- Only `divide-before-multiply` is excluded explicitly via `--exclude`.
 - Any new detector finding now fails local security checks and CI.
 - Tool versions are pinned for reproducibility (Foundry `1.5.1` in CI, Slither `0.11.4` in script).
 

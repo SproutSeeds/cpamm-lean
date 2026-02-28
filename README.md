@@ -11,7 +11,7 @@ Formally verified constant-product AMM artifact:
 ## Pinned Toolchain
 
 - Lean: `leanprover/lean4:v4.26.0` (`lean-toolchain`)
-- Solidity compiler: `0.8.20` (exact pragma + `foundry.toml`)
+- Solidity compiler: `0.8.30` (exact pragma + `foundry.toml`)
 - Foundry (CI): `1.5.1`
 - Slither: `0.11.4` (`scripts/security/slither.sh`)
 
