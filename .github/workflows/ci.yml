@@ -133,7 +133,7 @@ jobs:
             grep -E "result\(s\) found" artifacts/slither.log || true
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload Slither SARIF
-        if: always()
+        if: always() && hashFiles('artifacts/slither.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: artifacts/slither.sarif
