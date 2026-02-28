@@ -24,6 +24,21 @@ All notable changes to this project are documented in this file.
   - `src/CPAMM.sol` branch coverage floor gate
 - Documentation updated for theorem inventory, refinement scope, and audit/security workflow.
 
+## v1.4 - 2026-02-28
+
+### Added
+- Trace-level Solidity refinement closure in Lean:
+  - `SolidityStep`
+  - `SolidityReachable`
+  - `valid_preserved_solidityStep`
+  - `valid_preserved_solidityReachable`
+
+### Changed
+- CI security reliability improvements:
+  - retry-wrapped pip/slither installs in `scripts/security/slither.sh`
+  - `.venv-security` and pip cache reuse in CI security job
+- CI SARIF upload made conditional on SARIF file presence to avoid secondary failure masking.
+
 ## v1.2 - 2026-02-28
 
 ### Added

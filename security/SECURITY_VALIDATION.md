@@ -62,6 +62,7 @@ CI gate behavior:
 - Any new detector finding now fails local security checks and CI.
 - Tool versions are pinned for reproducibility (Foundry `1.5.1` in CI, Slither `0.11.4` in script).
 - CI exports Slither SARIF output and uploads it to GitHub Security (`upload-sarif`).
+- CI caches `.venv-security`/pip state and uses retry-wrapped installs in `scripts/security/slither.sh` to reduce transient network failures.
 
 ## Notes
 

@@ -54,6 +54,7 @@ CI enforcement now includes:
 - pinned Lean action SHA (`leanprover/lean-action@c544e896...`)
 - coverage threshold gate for `src/CPAMM.sol` (lines/statements must remain `100%`; branch coverage has a floor gate)
 - SARIF upload to GitHub Security for Slither findings
+- cached/retried Slither toolchain setup in CI for stability
 
 ## What Is Proved
 
