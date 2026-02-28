@@ -8,8 +8,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: leanprover/lean4-action@v1
-      - run: lake exe cache get
-      - run: lake build
+      - run: mkdir -p artifacts
+      - name: Lean cache
+        run: |
+          set -o pipefail
+          lake exe cache get 2>&1 | tee artifacts/lake-cache.log
+      - name: Lean build
+        run: |
+          set -o pipefail
+          lake build 2>&1 | tee artifacts/lake-build.log
+      - name: Lean summary
+        run: |
+          {
+            echo "## Lean Gate"
+            echo ""
+            tail -n 5 artifacts/lake-build.log
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lean-artifacts
+          path: artifacts/lake-*.log
+          if-no-files-found: warn
 
   solidity:
     runs-on: ubuntu-latest
@@ -18,7 +38,39 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: 1.5.1
-      - run: cd solidity && forge test
+      - run: mkdir -p artifacts
+      - name: Forge tests (human log)
+        run: |
+          set -o pipefail
+          cd solidity
+          forge test --gas-report 2>&1 | tee ../artifacts/forge-test.log
+      - name: Forge tests (JSON)
+        run: |
+          cd solidity
+          forge test --json > ../artifacts/forge-test.json
+      - name: Forge coverage (summary + lcov)
+        run: |
+          set -o pipefail
+          cd solidity
+          forge coverage --report summary --report lcov 2>&1 | tee ../artifacts/forge-coverage.log
+          if [[ -f lcov.info ]]; then cp lcov.info ../artifacts/lcov.info; fi
+      - name: Solidity summary
+        run: |
+          {
+            echo "## Solidity Gate"
+            echo ""
+            grep -E "^Suite result:|^Ran [0-9]+ test suites" artifacts/forge-test.log || true
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: solidity-artifacts
+          path: |
+            artifacts/forge-test.log
+            artifacts/forge-test.json
+            artifacts/forge-coverage.log
+            artifacts/lcov.info
+          if-no-files-found: warn
 
   security:
     runs-on: ubuntu-latest
@@ -30,4 +82,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: ./scripts/security/slither.sh
+      - run: mkdir -p artifacts
+      - name: Slither gate
+        run: |
+          set -o pipefail
+          SLITHER_SARIF=artifacts/slither.sarif ./scripts/security/slither.sh 2>&1 | tee artifacts/slither.log
+      - name: Security summary
+        run: |
+          {
+            echo "## Security Gate"
+            echo ""
+            grep -E "result\(s\) found" artifacts/slither.log || true
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-artifacts
+          path: |
+            artifacts/slither.log
+            artifacts/slither.sarif
+          if-no-files-found: warn

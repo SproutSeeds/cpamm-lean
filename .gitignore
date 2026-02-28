@@ -1,2 +1,4 @@
 .lake/
 .venv-security/
+solidity/lcov.info
+artifacts/

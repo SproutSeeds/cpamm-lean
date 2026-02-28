@@ -44,6 +44,11 @@ Run Slither static analysis:
 See triaged findings in [`security/SECURITY_VALIDATION.md`](security/SECURITY_VALIDATION.md).
 CI runs this gate and fails on any non-triaged detector findings.
 
+Each CI run also publishes artifacts for review:
+- Lean cache/build logs
+- Forge test log + JSON report + coverage output (`lcov.info`)
+- Slither log + SARIF report
+
 ## What Is Proved
 
 - State validity invariants are preserved across add/remove/swap relations
