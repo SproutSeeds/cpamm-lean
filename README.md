@@ -33,6 +33,7 @@ cd solidity
 ```
 
 Differential coverage includes swap/add/remove checks plus a mixed-operation stateful shadow-model fuzz test.
+The suite also includes a Foundry invariant campaign (`CPAMM.Invariant.t.sol`) with stateful handler-based execution.
 
 Run Slither static analysis:
 
