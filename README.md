@@ -68,6 +68,7 @@ CI enforcement now includes:
   - `sim_addLiquidity`
   - `sim_addLiquidity_bootstrap`
   - `sim_removeLiquidity`
+- Trace-level Solidity validity preservation for arbitrary finite step sequences
 
 Full theorem inventory and assumptions are in [`VERIFICATION.md`](VERIFICATION.md).
 

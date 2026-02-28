@@ -38,10 +38,13 @@
 - `valid_preserved_soliditySwapYforX`
 - `valid_preserved_solidityAddLiquidity`
 - `valid_preserved_solidityRemoveLiquidity`
+- `valid_preserved_solidityStep`
+- `valid_preserved_solidityReachable`
 
 ## Refinement Scope
 
 The refinement layer models Solidity storage and transitions in Lean (`SolidityStorage`, `alpha`, and `Solidity*` relations) and proves simulation into the abstract CPAMM relations.
+It now also includes a trace-level reachability relation (`SolidityReachable`) with theorem-level validity preservation across arbitrary finite step sequences.
 
 Current scope is **bounded floor simulation** in the Solidity relations:
 - `SoliditySwapXforY` and `SoliditySwapYforX` are modeled with pure integer floor arithmetic and are proved against bounded abstract swap relations (`SwapXforYFloor`, `SwapYforXFloor`), where floored outputs are bounded above by the exact `dy_of_swap`.

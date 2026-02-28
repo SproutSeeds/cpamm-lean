@@ -698,3 +698,52 @@ theorem valid_preserved_solidityRemoveLiquidity
   rcases hsim with ⟨dL', hfloor⟩
   exact valid_preserved_removeLiquidityFloor (s := alpha σ) (s' := alpha σ') (addr := addr)
     (dL := dL') hv hfloor
+
+/-- One concrete Solidity transition step. -/
+inductive SolidityStep : SolidityStorage → SolidityStorage → Prop
+  | swapXforY {σ σ' : SolidityStorage} (dx : ℕ)
+      (h : SoliditySwapXforY σ σ' dx) :
+      SolidityStep σ σ'
+  | swapYforX {σ σ' : SolidityStorage} (dy : ℕ)
+      (h : SoliditySwapYforX σ σ' dy) :
+      SolidityStep σ σ'
+  | addLiquidity {σ σ' : SolidityStorage} (addr : SolAddress) (dx dy : ℕ)
+      (h : SolidityAddLiquidity σ σ' addr dx dy) :
+      SolidityStep σ σ'
+  | removeLiquidity {σ σ' : SolidityStorage} (addr : SolAddress) (dL : ℕ)
+      (h : SolidityRemoveLiquidity σ σ' addr dL) :
+      SolidityStep σ σ'
+
+theorem valid_preserved_solidityStep
+    {σ σ' : SolidityStorage}
+    (hv : Valid (alpha σ))
+    (hstep : SolidityStep σ σ') :
+    Valid (alpha σ') := by
+  cases hstep with
+  | swapXforY dx h =>
+      exact valid_preserved_soliditySwapXforY σ σ' dx hv h
+  | swapYforX dy h =>
+      exact valid_preserved_soliditySwapYforX σ σ' dy hv h
+  | addLiquidity addr dx dy h =>
+      exact valid_preserved_solidityAddLiquidity σ σ' addr dx dy hv h
+  | removeLiquidity addr dL h =>
+      exact valid_preserved_solidityRemoveLiquidity σ σ' addr dL hv h
+
+/-- Reachability by finite sequences of Solidity steps. -/
+inductive SolidityReachable : SolidityStorage → SolidityStorage → Prop
+  | refl (σ : SolidityStorage) : SolidityReachable σ σ
+  | tail {σ₁ σ₂ σ₃ : SolidityStorage}
+      (h12 : SolidityStep σ₁ σ₂)
+      (h23 : SolidityReachable σ₂ σ₃) :
+      SolidityReachable σ₁ σ₃
+
+theorem valid_preserved_solidityReachable
+    {σ σ' : SolidityStorage}
+    (hreach : SolidityReachable σ σ')
+    (hv : Valid (alpha σ)) :
+    Valid (alpha σ') := by
+  induction hreach with
+  | refl _ =>
+      simpa using hv
+  | tail h12 h23 ih =>
+      exact ih (valid_preserved_solidityStep hv h12)
