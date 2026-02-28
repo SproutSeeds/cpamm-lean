@@ -51,11 +51,12 @@ From `CPAMM/Rounding.lean`:
 ## External Validation
 
 - Foundry test suites include baseline unit/fuzz tests plus differential shadow-model fuzzing for swap/add/remove and mixed-operation traces (`solidity/test/CPAMM*.t.sol`).
-- Security static analysis is run via `scripts/security/slither.sh` in fail-on-findings mode, with only two explicitly triaged exclusions (`divide-before-multiply`, `solc-version`).
+- Security static analysis is run via `scripts/security/slither.sh` in fail-on-findings mode, with one explicitly triaged exclusion (`divide-before-multiply`).
 - CI (`.github/workflows/ci.yml`) runs three gates on push/PR:
   - Lean build
   - Solidity tests
   - Slither security gate
+- External-review assumptions and threat-model notes are documented in `security/AUDIT_README.md`.
 
 ## Assumptions
 

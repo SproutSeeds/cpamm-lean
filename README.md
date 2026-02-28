@@ -42,6 +42,7 @@ Run Slither static analysis:
 ```
 
 See triaged findings in [`security/SECURITY_VALIDATION.md`](security/SECURITY_VALIDATION.md).
+External reviewer assumptions and scope boundaries are summarized in [`security/AUDIT_README.md`](security/AUDIT_README.md).
 CI runs this gate and fails on any non-triaged detector findings.
 
 Each CI run also publishes artifacts for review:
