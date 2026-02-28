@@ -32,6 +32,7 @@ Run Slither static analysis:
 ```
 
 See triaged findings in [`security/SECURITY_VALIDATION.md`](security/SECURITY_VALIDATION.md).
+CI runs this gate and fails on any non-triaged detector findings.
 
 ## What Is Proved
 

@@ -1,6 +1,6 @@
 # Security Validation (Step 3)
 
-Date: 2026-02-26
+Date: 2026-02-28
 
 ## Scope
 
@@ -38,8 +38,7 @@ Status:
 Command executed:
 
 ```bash
-source .venv-security/bin/activate
-slither solidity/src/CPAMM.sol
+./scripts/security/slither.sh
 ```
 
 Observed detector findings:
@@ -49,8 +48,13 @@ Observed detector findings:
 Triage:
 - `divide-before-multiply`: **accepted / intentional** in this artifact.
   The fee model intentionally floors effective input before output computation, matching both the Solidity implementation and refinement strategy.
-- `solc-version`: **known warning**.
-  The project requirement specifies Solidity `^0.8.20`; version hardening (e.g., pinning a newer patched compiler) can be done in a follow-up if scope allows.
+- `solc-version`: **accepted / tracked** for this phase.
+  This is currently documented as a known compiler-version warning.
+
+CI gate behavior:
+- `scripts/security/slither.sh` runs Slither in fail-on-findings mode (`--fail-pedantic`).
+- The two triaged detectors above are excluded explicitly via `--exclude`.
+- Any new detector finding now fails local security checks and CI.
 
 ## Notes
 
