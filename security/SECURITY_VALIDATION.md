@@ -17,11 +17,17 @@ Added tests:
 1. `testFuzz_differential_swapXforY_matches_model_and_bound`
 2. `testFuzz_differential_swapYforX_matches_model_and_bound`
 3. `testFuzz_differential_three_swap_sequence`
+4. `testFuzz_differential_addLiquidity_matches_model_and_bound`
+5. `testFuzz_differential_removeLiquidity_matches_model_and_bound`
+6. `testFuzz_stateful_differential_mixed_operations`
 
 What is checked:
 - Exact match with an independent integer reference model for swap outputs and post-state reserves.
+- Exact match with an independent integer reference model for add/remove liquidity outputs and post-state reserves.
 - Lean-style rational bound for swaps: floor-rounded on-chain output is bounded above by the exact rational no-floor output.
+- Lean-style floor bounds for LP minting and reserve withdrawals: floor result stays within `(exact - 1, exact]`.
 - Multi-step swap sequence consistency and reserve positivity.
+- Mixed-operation stateful consistency (add/remove/swap) against a shadow model over several fuzzed steps.
 
 Run:
 
@@ -31,7 +37,7 @@ cd solidity
 ```
 
 Status:
-- Pass (`11/11` tests total across the project).
+- Pass (`14/14` tests total across the project).
 
 ## External Tooling: Slither
 

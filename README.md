@@ -25,6 +25,8 @@ cd solidity
 ~/.foundry/bin/forge test
 ```
 
+Differential coverage includes swap/add/remove checks plus a mixed-operation stateful shadow-model fuzz test.
+
 Run Slither static analysis:
 
 ```bash
