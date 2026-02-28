@@ -6,7 +6,7 @@ Date: 2026-02-28
 
 This validation pass adds:
 - Differential fuzzing between on-chain CPAMM behavior and an independent reference model.
-- Stateful invariant fuzzing via Foundry `StdInvariant`.
+- Stateful invariant fuzzing via Foundry `StdInvariant` (two LP actors).
 - External static analysis using Slither.
 
 ## Differential Fuzzing
@@ -38,7 +38,7 @@ cd solidity
 ```
 
 Status:
-- Pass (`18/18` tests total across the project, including 4 invariant tests).
+- Pass (`18/18` tests total across the project, including 4 multi-actor invariant tests).
 
 ## External Tooling: Slither
 
