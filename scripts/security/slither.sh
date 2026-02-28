@@ -11,7 +11,7 @@ if [[ ! -d "$VENV_DIR" ]]; then
 fi
 
 source "$VENV_DIR/bin/activate"
-python -m pip install --upgrade pip >/dev/null
+python -m pip install --upgrade pip
 
 INSTALLED_SLITHER_VERSION="$(
   python -m pip show slither-analyzer 2>/dev/null | awk '/^Version:/{print $2}'

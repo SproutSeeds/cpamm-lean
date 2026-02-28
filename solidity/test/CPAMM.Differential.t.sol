@@ -38,6 +38,7 @@ contract CPAMMDifferentialTest is Test {
 
     function _seedPool(uint256 x0, uint256 y0) internal returns (ModelState memory s) {
         uint256 shares0 = cpamm.addLiquidity(x0, y0);
+        // Protocol rule at initialization (`totalSupply == 0`): first LP shares equal dx.
         assertEq(shares0, x0, "initial mint mismatch");
         s = ModelState({x: x0, y: y0, L: x0, lpBalance: x0});
         _assertContractMatches(s);
