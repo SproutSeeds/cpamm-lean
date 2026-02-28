@@ -49,7 +49,7 @@ Command executed:
 
 Observed detector findings:
 1. `divide-before-multiply` (swap functions)
-2. `solc-version` warning for `^0.8.20` and known compiler issues listed by Slither
+2. `solc-version` warning for `0.8.20` and known compiler issues listed by Slither
 
 Triage:
 - `divide-before-multiply`: **accepted / intentional** in this artifact.
@@ -61,6 +61,7 @@ CI gate behavior:
 - `scripts/security/slither.sh` runs Slither in fail-on-findings mode (`--fail-pedantic`).
 - The two triaged detectors above are excluded explicitly via `--exclude`.
 - Any new detector finding now fails local security checks and CI.
+- Tool versions are pinned for reproducibility (Foundry `1.5.1` in CI, Slither `0.11.4` in script).
 
 ## Notes
 

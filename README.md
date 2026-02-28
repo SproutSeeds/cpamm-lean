@@ -8,6 +8,13 @@ Formally verified constant-product AMM artifact:
 - Foundry tests (`solidity/test/CPAMM.t.sol`)
 - Refinement layer from Solidity storage relations to Lean transitions
 
+## Pinned Toolchain
+
+- Lean: `leanprover/lean4:v4.26.0` (`lean-toolchain`)
+- Solidity compiler: `0.8.20` (exact pragma + `foundry.toml`)
+- Foundry (CI): `1.5.1`
+- Slither: `0.11.4` (`scripts/security/slither.sh`)
+
 ## Quick Start
 
 Run full reproduction (Lean + Solidity):
