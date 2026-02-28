@@ -28,7 +28,15 @@
 - `sim_swapXforY`
 - `sim_swapYforX`
 - `sim_addLiquidity`
+- `sim_addLiquidity_bootstrap`
 - `sim_removeLiquidity`
+- `valid_preserved_swapXforYFloor`
+- `valid_preserved_swapYforXFloor`
+- `valid_preserved_removeLiquidityFloor`
+- `valid_preserved_soliditySwapXforY`
+- `valid_preserved_soliditySwapYforX`
+- `valid_preserved_solidityAddLiquidity`
+- `valid_preserved_solidityRemoveLiquidity`
 
 ## Refinement Scope
 
@@ -40,6 +48,7 @@ Current scope is **bounded floor simulation** in the Solidity relations:
 - `SolidityRemoveLiquidity` is proved against `RemoveLiquidityFloor`, where each withdrawn reserve amount is within `(exact - 1, exact]` of the rational withdrawal quantity.
 
 This means refinement now covers arbitrary integer-rounded swap/add/remove steps with explicit floor-error bounds.
+Additionally, `sim_addLiquidity_bootstrap` explicitly covers the first-liquidity bootstrap path (`totalSupply = reserveX = reserveY = 0`), which is outside `Valid` due strict positive-reserve requirements.
 
 ## Rounding Bounds
 
@@ -57,6 +66,7 @@ From `CPAMM/Rounding.lean`:
   - Solidity tests
   - Slither security gate
 - External-review assumptions and threat-model notes are documented in `security/AUDIT_README.md`.
+- CI also enforces coverage regression protection for `solidity/src/CPAMM.sol` (line and statement coverage must remain `100%`) and uploads Slither SARIF to GitHub Security.
 
 ## Assumptions
 

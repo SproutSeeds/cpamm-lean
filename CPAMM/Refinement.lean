@@ -431,6 +431,57 @@ theorem sim_addLiquidity
     exact_mod_cast (hbal_other' a ha)
   · simp [alpha, solidityFee, hnum', hden']
 
+/--
+  Bootstrap simulation for the first liquidity provision.
+  This covers the `totalSupply = 0`, `reserveX = 0`, `reserveY = 0` contract entry path,
+  which is outside `Valid (alpha σ)` because `Valid` requires strictly positive reserves.
+-/
+theorem sim_addLiquidity_bootstrap
+    (σ σ' : SolidityStorage) (addr : SolAddress) (dx dy : ℕ)
+    (hL0 : σ.totalSupply = 0)
+    (_hX0 : σ.reserveX = 0)
+    (_hY0 : σ.reserveY = 0)
+    (hstep : SolidityAddLiquidity σ σ' addr dx dy) :
+    ∃ dx' dy' : ℚ, AddLiquidity (alpha σ) (alpha σ') addr dx' dy' := by
+  rcases hstep with
+    ⟨hdx_pos, hdy_pos, _hprop, _, hresX, hresY, hL', hbal_addr',
+      hbal_other', hnum', hden'⟩
+  refine ⟨(dx : ℚ), (dy : ℚ), ?_⟩
+  unfold AddLiquidity
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · exact_mod_cast hdx_pos
+  · exact_mod_cast hdy_pos
+  · intro hL_pos
+    change (σ.totalSupply : ℚ) > 0 at hL_pos
+    have hL_nat_pos : 0 < σ.totalSupply := by exact_mod_cast hL_pos
+    have : False := by simp [hL0] at hL_nat_pos
+    exact False.elim this
+  · change (σ'.reserveX : ℚ) = (σ.reserveX : ℚ) + (dx : ℚ)
+    exact_mod_cast hresX
+  · change (σ'.reserveY : ℚ) = (σ.reserveY : ℚ) + (dy : ℚ)
+    exact_mod_cast hresY
+  · have htotal0 : σ'.totalSupply = dx := by
+      simpa [mintedShares, hL0] using hL'
+    have hcast0 : (σ'.totalSupply : ℚ) = (dx : ℚ) := by exact_mod_cast htotal0
+    have hL0q : (σ.totalSupply : ℚ) = 0 := by exact_mod_cast hL0
+    change (σ'.totalSupply : ℚ) =
+      if (σ.totalSupply : ℚ) = 0 then (dx : ℚ)
+      else (σ.totalSupply : ℚ) + (σ.totalSupply : ℚ) * (dx : ℚ) / (σ.reserveX : ℚ)
+    simpa [hL0q] using hcast0
+  · change (σ'.balanceOf addr : ℚ) =
+      (σ.balanceOf addr : ℚ) + ((σ'.totalSupply : ℚ) - (σ.totalSupply : ℚ))
+    have hbal_q :
+        (σ'.balanceOf addr : ℚ) = (σ.balanceOf addr : ℚ) + (mintedShares σ dx : ℚ) := by
+      exact_mod_cast hbal_addr'
+    have htotal_q :
+        (σ'.totalSupply : ℚ) = (σ.totalSupply : ℚ) + (mintedShares σ dx : ℚ) := by
+      exact_mod_cast hL'
+    linarith [hbal_q, htotal_q]
+  · intro a ha
+    change (σ'.balanceOf a : ℚ) = (σ.balanceOf a : ℚ)
+    exact_mod_cast (hbal_other' a ha)
+  · simp [alpha, solidityFee, hnum', hden']
+
 theorem sim_removeLiquidity
     (σ σ' : SolidityStorage) (addr : SolAddress) (dL : ℕ)
     (hv : Valid (alpha σ))
@@ -521,3 +572,121 @@ theorem sim_removeLiquidity
       change (σ'.balanceOf a : ℚ) = (σ.balanceOf a : ℚ)
       exact_mod_cast (hbal_other' a ha)
     · simp [alpha, solidityFee, hnum', hden']
+
+theorem valid_preserved_swapXforYFloor
+    {α : Type*} (s s' : CpammState α) (dx : ℚ)
+    (hv : Valid s)
+    (ht : SwapXforYFloor s s' dx) :
+    Valid s' := by
+  rcases hv with ⟨hx, _hy, hL_nonneg, hbal_nonneg, hf_nonneg, hf_lt_one⟩
+  rcases ht with ⟨hdx_pos, _dyFloor, _hdy_pos, _hdy_bound, hx', _hy', hy'_pos, hL', hbal', hf'⟩
+  refine ⟨?_, hy'_pos, ?_, ?_, ?_, ?_⟩
+  · linarith [hx, hdx_pos, hx']
+  · linarith [hL_nonneg, hL']
+  · intro a
+    simpa [hbal'] using hbal_nonneg a
+  · simpa [hf'] using hf_nonneg
+  · simpa [hf'] using hf_lt_one
+
+theorem valid_preserved_swapYforXFloor
+    {α : Type*} (s s' : CpammState α) (dy : ℚ)
+    (hv : Valid s)
+    (ht : SwapYforXFloor s s' dy) :
+    Valid s' := by
+  rcases hv with ⟨_hx, hy, hL_nonneg, hbal_nonneg, hf_nonneg, hf_lt_one⟩
+  rcases ht with ⟨hdy_pos, _dxFloor, _hdx_pos, _hdx_bound, hy', _hx', hx'_pos, hL', hbal', hf'⟩
+  refine ⟨hx'_pos, ?_, ?_, ?_, ?_, ?_⟩
+  · linarith [hy, hdy_pos, hy']
+  · linarith [hL_nonneg, hL']
+  · intro a
+    simpa [hbal'] using hbal_nonneg a
+  · simpa [hf'] using hf_nonneg
+  · simpa [hf'] using hf_lt_one
+
+theorem valid_preserved_removeLiquidityFloor
+    {α : Type*} [DecidableEq α] (s s' : CpammState α) (addr : α) (dL : ℚ)
+    (hv : Valid s)
+    (ht : RemoveLiquidityFloor s s' addr dL) :
+    Valid s' := by
+  rcases hv with ⟨_hx, _hy, hL_nonneg, hbal_nonneg, hf_nonneg, hf_lt_one⟩
+  rcases ht with
+    ⟨hdL_pos, hdL_le_bal, hdL_lt_L, _outX, _outY, _hOutX_le, _hOutX_gt, _hOutY_le, _hOutY_gt,
+      _hx', _hy', hx'_pos, hy'_pos, hL', hbal_addr', hbal_other', hf'⟩
+  refine ⟨hx'_pos, hy'_pos, ?_, ?_, ?_, ?_⟩
+  · have hL_minus_nonneg : s.L - dL ≥ 0 := by linarith [hL_nonneg, hdL_lt_L]
+    linarith [hL', hL_minus_nonneg]
+  · intro a
+    by_cases ha : a = addr
+    · have hdL_le_bal_a : dL ≤ s.balances a := by simpa [ha] using hdL_le_bal
+      have hbal_addr_minus_nonneg : s.balances a - dL ≥ 0 := by
+        linarith [hbal_nonneg a, hdL_le_bal_a]
+      have hbal_addr'_a : s'.balances a = s.balances a - dL := by
+        simpa [ha] using hbal_addr'
+      linarith [hbal_addr'_a, hbal_addr_minus_nonneg]
+    · have hbal_a_nonneg : s.balances a ≥ 0 := hbal_nonneg a
+      linarith [hbal_other' a ha, hbal_a_nonneg]
+  · simpa [hf'] using hf_nonneg
+  · simpa [hf'] using hf_lt_one
+
+theorem valid_preserved_soliditySwapXforY
+    (σ σ' : SolidityStorage) (dx : ℕ)
+    (hv : Valid (alpha σ))
+    (hstep : SoliditySwapXforY σ σ' dx) :
+    Valid (alpha σ') := by
+  exact valid_preserved_swapXforYFloor (s := alpha σ) (s' := alpha σ') (dx := (dx : ℚ))
+    hv (sim_swapXforY σ σ' dx hv hstep)
+
+theorem valid_preserved_soliditySwapYforX
+    (σ σ' : SolidityStorage) (dy : ℕ)
+    (hv : Valid (alpha σ))
+    (hstep : SoliditySwapYforX σ σ' dy) :
+    Valid (alpha σ') := by
+  exact valid_preserved_swapYforXFloor (s := alpha σ) (s' := alpha σ') (dy := (dy : ℚ))
+    hv (sim_swapYforX σ σ' dy hv hstep)
+
+theorem valid_preserved_solidityAddLiquidity
+    (σ σ' : SolidityStorage) (addr : SolAddress) (dx dy : ℕ)
+    (hv : Valid (alpha σ))
+    (hstep : SolidityAddLiquidity σ σ' addr dx dy) :
+    Valid (alpha σ') := by
+  rcases hv with ⟨_hx, _hy, _hL_nonneg, _hbal_nonneg, hf_nonneg, hf_lt_one⟩
+  rcases hstep with
+    ⟨hdx_pos, hdy_pos, _hprop, _hminted_pos, hresX, hresY, hL', hbal_addr',
+      hbal_other', hnum', hden'⟩
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+  · have hx_nat : 0 < σ'.reserveX := by
+      rw [hresX]
+      exact Nat.add_pos_right σ.reserveX hdx_pos
+    change (σ'.reserveX : ℚ) > 0
+    exact_mod_cast hx_nat
+  · have hy_nat : 0 < σ'.reserveY := by
+      rw [hresY]
+      exact Nat.add_pos_right σ.reserveY hdy_pos
+    change (σ'.reserveY : ℚ) > 0
+    exact_mod_cast hy_nat
+  · change (σ'.totalSupply : ℚ) ≥ 0
+    rw [hL']
+    exact_mod_cast (Nat.zero_le (σ.totalSupply + mintedShares σ dx))
+  · intro a
+    by_cases ha : a = addr
+    · change (σ'.balanceOf a : ℚ) ≥ 0
+      have hbal_addr'_a : σ'.balanceOf a = σ.balanceOf a + mintedShares σ dx := by
+        simpa [ha] using hbal_addr'
+      rw [hbal_addr'_a]
+      exact_mod_cast (Nat.zero_le (σ.balanceOf a + mintedShares σ dx))
+    · change (σ'.balanceOf a : ℚ) ≥ 0
+      rw [hbal_other' a ha]
+      exact_mod_cast (Nat.zero_le (σ.balanceOf a))
+  · simpa [alpha, solidityFee, hnum', hden'] using hf_nonneg
+  · simpa [alpha, solidityFee, hnum', hden'] using hf_lt_one
+
+theorem valid_preserved_solidityRemoveLiquidity
+    (σ σ' : SolidityStorage) (addr : SolAddress) (dL : ℕ)
+    (hv : Valid (alpha σ))
+    (hstep : SolidityRemoveLiquidity σ σ' addr dL) :
+    Valid (alpha σ') := by
+  have hsim : ∃ dL' : ℚ, RemoveLiquidityFloor (alpha σ) (alpha σ') addr dL' :=
+    sim_removeLiquidity σ σ' addr dL hv hstep
+  rcases hsim with ⟨dL', hfloor⟩
+  exact valid_preserved_removeLiquidityFloor (s := alpha σ) (s' := alpha σ') (addr := addr)
+    (dL := dL') hv hfloor

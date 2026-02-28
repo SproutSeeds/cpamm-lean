@@ -50,6 +50,11 @@ Each CI run also publishes artifacts for review:
 - Forge test log + JSON report + coverage output (`lcov.info`)
 - Slither log + SARIF report
 
+CI enforcement now includes:
+- pinned Lean action SHA (`leanprover/lean-action@c544e896...`)
+- coverage threshold gate for `src/CPAMM.sol` (lines/statements must remain `100%`)
+- SARIF upload to GitHub Security for Slither findings
+
 ## What Is Proved
 
 - State validity invariants are preserved across add/remove/swap relations
@@ -61,6 +66,7 @@ Each CI run also publishes artifacts for review:
   - `sim_swapXforY`
   - `sim_swapYforX`
   - `sim_addLiquidity`
+  - `sim_addLiquidity_bootstrap`
   - `sim_removeLiquidity`
 
 Full theorem inventory and assumptions are in [`VERIFICATION.md`](VERIFICATION.md).

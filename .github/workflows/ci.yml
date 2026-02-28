@@ -2,12 +2,16 @@ name: CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   lean:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: leanprover/lean4-action@v1
+      - uses: leanprover/lean-action@c544e89643240c6b398f14a431bcdc6309e36b3e # v1
       - run: mkdir -p artifacts
       - name: Lean cache
         run: |
@@ -54,6 +58,38 @@ jobs:
           cd solidity
           forge coverage --report summary --report lcov 2>&1 | tee ../artifacts/forge-coverage.log
           if [[ -f lcov.info ]]; then cp lcov.info ../artifacts/lcov.info; fi
+      - name: Enforce CPAMM coverage threshold
+        run: |
+          python3 - <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          log = Path("artifacts/forge-coverage.log").read_text()
+          line = next((ln for ln in log.splitlines() if "src/CPAMM.sol" in ln), None)
+          if line is None:
+              print("error: src/CPAMM.sol coverage row not found")
+              sys.exit(1)
+
+          vals = re.findall(r"([0-9]+(?:\.[0-9]+)?)%", line)
+          if len(vals) < 2:
+              print(f"error: could not parse coverage percentages from line: {line}")
+              sys.exit(1)
+
+          line_cov = float(vals[0])
+          stmt_cov = float(vals[1])
+          if line_cov < 100.0 or stmt_cov < 100.0:
+              print(
+                  f"error: coverage regression for src/CPAMM.sol "
+                  f"(lines={line_cov:.2f}%, statements={stmt_cov:.2f}%)"
+              )
+              sys.exit(1)
+
+          print(
+              f"coverage gate passed for src/CPAMM.sol "
+              f"(lines={line_cov:.2f}%, statements={stmt_cov:.2f}%)"
+          )
+          PY
       - name: Solidity summary
         run: |
           {
@@ -94,6 +130,11 @@ jobs:
             echo ""
             grep -E "result\(s\) found" artifacts/slither.log || true
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload Slither SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: artifacts/slither.sarif
       - uses: actions/upload-artifact@v4
         if: always()
         with:

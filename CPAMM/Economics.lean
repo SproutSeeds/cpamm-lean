@@ -67,6 +67,49 @@ theorem product_nondecreasing_swap_with_fee
     _ ≤ s.x * s.y * ((s.x + dx) / den) := hscaled
     _ = product s' := by simp [hprod_formula]
 
+theorem product_nondecreasing_swapYforX_with_fee
+    {α : Type*} (s s' : CpammState α) (dy : ℚ)
+    (hv : Valid s)
+    (hf : s.f > 0)
+    (ht : SwapYforX s s' dy) :
+    product s' ≥ product s := by
+  rcases hv with ⟨hx, hy, _, _, hf_nonneg, hf_lt_one⟩
+  rcases ht with
+    ⟨hdy_pos, _, hy', hx', _, _, _, _⟩
+  let den : ℚ := s.y + dy * (1 - s.f)
+  have h_one_sub_pos : 0 < 1 - s.f := by linarith
+  have hdy_eff_pos : 0 < dy * (1 - s.f) := mul_pos hdy_pos h_one_sub_pos
+  have hden_pos : 0 < den := by
+    unfold den
+    linarith [hy, hdy_eff_pos]
+  have hden_ne : den ≠ 0 := ne_of_gt hden_pos
+  have hdy_eff_lt_dy : dy * (1 - s.f) < dy := by
+    have h_one_sub_lt_one : 1 - s.f < 1 := by linarith [hf]
+    have : dy * (1 - s.f) < dy * 1 := mul_lt_mul_of_pos_left h_one_sub_lt_one hdy_pos
+    simpa using this
+  have hden_le_num : den ≤ s.y + dy := by
+    unfold den
+    linarith [hdy_eff_lt_dy]
+  have hratio_ge_one : 1 ≤ (s.y + dy) / den := (one_le_div hden_pos).2 hden_le_num
+  have hprod_nonneg : 0 ≤ s.x * s.y := le_of_lt (mul_pos hx hy)
+  have hscaled :
+      s.x * s.y ≤ s.x * s.y * ((s.y + dy) / den) := by
+    simpa [one_mul] using (mul_le_mul_of_nonneg_left hratio_ge_one hprod_nonneg)
+  have hprod_formula :
+      product s' = s.x * s.y * ((s.y + dy) / den) := by
+    calc
+      product s' = (s.x - dy_of_swap s.y s.x s.f dy) * (s.y + dy) := by
+        simp [product, hx', hy']
+      _ = s.x * s.y * ((s.y + dy) / den) := by
+        unfold den
+        simp [dy_of_swap]
+        field_simp [hden_ne]
+        ring
+  calc
+    product s = s.x * s.y := by simp [product]
+    _ ≤ s.x * s.y * ((s.y + dy) / den) := hscaled
+    _ = product s' := by simp [hprod_formula]
+
 theorem output_bounded_by_reserve
     {α : Type*} (s s' : CpammState α) (dx : ℚ)
     (hv : Valid s)
