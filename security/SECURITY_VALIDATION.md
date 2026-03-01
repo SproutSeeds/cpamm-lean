@@ -55,6 +55,7 @@ Status:
 
 Token-class compatibility policy and test mapping are maintained in:
 - `security/TOKEN_COMPATIBILITY.md`
+- `reports/ASSUMPTION_TEST_MATRIX.md`
 
 ## External Tooling: Slither
 

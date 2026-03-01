@@ -24,6 +24,10 @@ All notable changes to this project are documented in this file.
   - reserve/token-balance sync invariant (`ReserveSync`) and per-step preservation theorems
   - projection/simulation into arithmetic `Solidity*` relations
   - trace-level `validAndSync_preserved_tokenizedReachable`
+- Token behavior taxonomy module: `CPAMM/TokenizedBehavior.lean` with:
+  - token class partition (`TokenClass`, `SupportedTokenClass`)
+  - unsupported-class non-exactness lemmas
+  - concrete reserve-sync break witness for external drift
 - Adversarial token behavior test suite: `solidity/test/CPAMM.Tokenized.Adversarial.t.sol` with rejection-path coverage for:
   - false-return `transferFrom`
   - no-op `transferFrom`
@@ -31,6 +35,7 @@ All notable changes to this project are documented in this file.
   - false-return `transfer` on output path
   - external balance drift (rebase-style mismatch)
 - Reviewer-facing token compatibility matrix: `security/TOKEN_COMPATIBILITY.md`.
+- Assumption-to-test coupling matrix: `reports/ASSUMPTION_TEST_MATRIX.md`.
 - One-command review package generator: `scripts/review_package.sh`.
 - Review package usage guide: `reports/REVIEW_PACKAGE.md`.
 

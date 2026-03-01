@@ -46,6 +46,7 @@ Machine-checked proofs (`CPAMM/*.lean`) cover:
 - Floor-rounding bounds.
 - Refinement simulations for `swapXforY`, `swapYforX`, `addLiquidity`, `removeLiquidity`.
 - Tokenized reserve-sync preservation and projection/simulation under exact-transfer assumptions.
+- Token behavior taxonomy and unsupported-class non-exact lemmas.
 
 Foundry tests (`solidity/test/*.t.sol`) cover:
 - Unit and fuzz checks for contract behavior.
@@ -64,6 +65,7 @@ Static analysis (`scripts/security/slither.sh`):
 
 Token compatibility matrix:
 - `security/TOKEN_COMPATIBILITY.md`
+- `reports/ASSUMPTION_TEST_MATRIX.md`
 
 Review package bundle:
 - `scripts/review_package.sh`

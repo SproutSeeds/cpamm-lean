@@ -22,6 +22,11 @@ This note defines the formal/spec alignment plan for the ERC20-backed extension
   - Tokenized step relations for add/remove/swaps with exact transfer-delta assumptions
   - Projection/simulation theorems from tokenized steps to `Solidity*` relations
   - Trace-level validity + reserve-sync preservation theorem (`validAndSync_preserved_tokenizedReachable`)
+- Lean token behavior taxonomy exists in:
+  - `CPAMM/TokenizedBehavior.lean`
+  - formal token-class partition (`TokenClass`, `SupportedTokenClass`)
+  - adversarial non-exact lemmas (`feeOnTransferPull_not_exact`, `inflationaryPull_not_exact`, `noOpPull_not_exact`)
+  - explicit reserve-sync break witness (`exists_reserveSync_break_by_externalDrift`)
 
 ## Lean Refinement Scope Today
 
@@ -33,24 +38,21 @@ Current tokenized assumptions are explicit by construction:
 - exact transfer-in/transfer-out deltas for each step
 - no hidden token-side balance mutation during a modeled transition
 - concrete supported/unsupported token classes are listed in `security/TOKEN_COMPATIBILITY.md`
+- assumption/test mapping is tracked in `reports/ASSUMPTION_TEST_MATRIX.md`
 
 ## Formalization Targets (Next)
 
-1. **Token Behavior Taxonomy in Lean**
-- Partition token classes (standard ERC20 vs non-standard/rebasing/fee-on-transfer) in the formal model.
-- Encode failure boundaries as assumptions/lemmas instead of prose-only scope notes.
-
-2. **Adversarial Semantics Layer**
-- Add abstract counterexamples/non-preservation lemmas for unsupported token behaviors to mirror the Solidity adversarial tests.
-
-3. **Tighter Projection Interface**
+1. **Tighter Projection Interface**
 - Prove a reusable simulation theorem from tokenized traces directly to `SolidityReachable` traces.
 
-4. **Proof/Test Coupling**
-- Link each assumption class to concrete Foundry tests in a machine-readable matrix.
+2. **Semantic Strengthening**
+- Lift behavior-taxonomy lemmas into step-level non-preservation theorems for unsupported classes.
+
+3. **Proof/Test Coupling Automation**
+- Add CI checks that enforce consistency between `reports/ASSUMPTION_TEST_MATRIX.md` and existing test names.
 
 ## Reviewer Guidance
 
 - `CPAMM.sol` + existing Lean refinement remains the formally verified artifact.
 - `CPAMMTokenized.sol` is now both hardened/test-validated and partially formalized:
-  reserve-sync and projection are machine-checked under explicit exact-transfer assumptions.
+  reserve-sync/projection are machine-checked under explicit exact-transfer assumptions, and unsupported token classes are explicitly formalized in Lean.

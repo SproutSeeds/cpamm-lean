@@ -9,6 +9,15 @@ Formally verified constant-product AMM artifact:
 - Foundry tests (`solidity/test/CPAMM.t.sol`)
 - Refinement layers from Solidity/tokenized storage relations to Lean transitions
 
+## Capability Map
+
+| Capability | Lean Proof Status | Test Status | Notes |
+|---|---|---|---|
+| Core CPAMM arithmetic-state refinement (`CPAMM.sol`) | Fully proved | Differential + invariant + unit/fuzz | Main formal artifact |
+| Tokenized reserve-sync + projection simulation | Proved under exact-transfer assumptions | Integration + adversarial matrix | `CPAMM/TokenizedRefinement.lean` |
+| Token behavior taxonomy / assumption boundaries | Formalized (classification + non-exact lemmas + sync-break witness) | Adversarial rejection tests | `CPAMM/TokenizedBehavior.lean` |
+| Non-standard token composability (rebasing/FoT/inflationary) | Explicitly outside supported proof envelope | Explicitly rejected at runtime | See token compatibility docs |
+
 ## Pinned Toolchain
 
 - Lean: `leanprover/lean4:v4.26.0` (`lean-toolchain`)
@@ -52,6 +61,7 @@ Run Slither static analysis:
 
 See triaged findings in [`security/SECURITY_VALIDATION.md`](security/SECURITY_VALIDATION.md).
 Token support/rejection policy is documented in [`security/TOKEN_COMPATIBILITY.md`](security/TOKEN_COMPATIBILITY.md).
+Assumption-to-test coupling is tracked in [`reports/ASSUMPTION_TEST_MATRIX.md`](reports/ASSUMPTION_TEST_MATRIX.md).
 External reviewer assumptions and scope boundaries are summarized in [`security/AUDIT_README.md`](security/AUDIT_README.md).
 CI runs this gate across `solidity/src` and fails on any non-triaged detector findings.
 
@@ -94,6 +104,7 @@ CI enforcement now includes:
 
 Full theorem inventory and assumptions are in [`VERIFICATION.md`](VERIFICATION.md).
 Tokenized extension scope and the formalization roadmap are in [`VERIFICATION_TOKENIZED.md`](VERIFICATION_TOKENIZED.md).
+Assumption/test linkage for the tokenized path is summarized in [`reports/ASSUMPTION_TEST_MATRIX.md`](reports/ASSUMPTION_TEST_MATRIX.md).
 
 ## Repository Layout
 
@@ -106,6 +117,7 @@ CPAMM/
   Rounding.lean
   Refinement.lean
   TokenizedRefinement.lean
+  TokenizedBehavior.lean
 solidity/
   src/CPAMM.sol
   src/CPAMMTokenized.sol
