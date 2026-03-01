@@ -39,10 +39,16 @@ Generate a single reviewer bundle (logs, JSON, SARIF, LCOV, checksums):
 ./scripts/review_package.sh
 ```
 
-Validate theorem inventory references in `VERIFICATION.md` against Lean declarations:
+Validate theorem inventory references in `VERIFICATION.md` against Lean declarations (complete mode by default):
 
 ```bash
 python3 scripts/validate_theorem_inventory.py
+```
+
+Optional listed-only mode (skip completeness check):
+
+```bash
+python3 scripts/validate_theorem_inventory.py --allow-incomplete
 ```
 
 ## Protocol Intake Gate

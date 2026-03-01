@@ -27,6 +27,7 @@ class TheoremInventoryValidationTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
         self.assertIn("theorem inventory validation passed", result.stdout)
+        self.assertIn("(complete mode)", result.stdout)
 
     def test_missing_theorem_reference_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -68,6 +69,48 @@ class TheoremInventoryValidationTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("section file not found", result.stdout)
+
+    def test_incomplete_section_fails_in_complete_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            bad_verification = Path(tmp_dir) / "VERIFICATION_INCOMPLETE.md"
+            text = VERIFICATION.read_text(encoding="utf-8")
+            text = text.replace("- `sim_swapXforY`\n", "", 1)
+            bad_verification.write_text(text, encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    str(SCRIPT),
+                    "--verification-md",
+                    str(bad_verification),
+                    "--root",
+                    str(ROOT),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("missing from VERIFICATION.md inventory", result.stdout)
+            self.assertIn("sim_swapXforY", result.stdout)
+
+    def test_allow_incomplete_mode_skips_completeness_check(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            incomplete_verification = Path(tmp_dir) / "VERIFICATION_INCOMPLETE_ALLOWED.md"
+            text = VERIFICATION.read_text(encoding="utf-8")
+            text = text.replace("- `sim_swapXforY`\n", "", 1)
+            incomplete_verification.write_text(text, encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    str(SCRIPT),
+                    "--verification-md",
+                    str(incomplete_verification),
+                    "--root",
+                    str(ROOT),
+                    "--allow-incomplete",
+                ]
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+            self.assertIn("(listed-only mode)", result.stdout)
 
 
 if __name__ == "__main__":

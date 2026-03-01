@@ -9,8 +9,11 @@ All notable changes to this project are documented in this file.
   - strict-gate mode enforces all three Lean-start prerequisites.
 - Added theorem inventory integrity gate:
   - `scripts/validate_theorem_inventory.py` validates `VERIFICATION.md` theorem entries against actual `theorem` declarations in referenced Lean files.
+  - validation now enforces bidirectional completeness by default (every listed theorem must exist, and every theorem in a documented Lean section must be listed).
+  - optional listed-only mode is available via `--allow-incomplete`.
   - CI `lean` job now runs theorem-inventory validation and publishes `artifacts/theorem-inventory-validation.log`.
   - `scripts/review_package.sh` now includes theorem-inventory validation evidence in the reviewer bundle.
+  - `VERIFICATION.md` theorem inventory now includes helper refinement theorems (`frac_mul_div_mono`, `inputEff_cast_le_exact`, `dyOutX_cast_le_dy_of_swap`, `dxOutY_cast_le_dy_of_swap`) to satisfy complete-mode coverage.
 - Added protocol intake assets:
   - `PROTOCOL_HANDOFF_CHECKLIST.md`
   - `Protocol/examples/cpamm/System.json`

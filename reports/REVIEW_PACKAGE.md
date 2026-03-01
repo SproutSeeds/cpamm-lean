@@ -21,7 +21,7 @@ You can also pass an explicit output path:
 1. `lake exe cache get`
 2. `lake build`
 3. theorem inventory generation over `CPAMM/*.lean`
-4. theorem inventory validation against `VERIFICATION.md`
+4. theorem inventory validation against `VERIFICATION.md` (complete mode)
 5. `forge test --gas-report`
 6. `forge test --json`
 7. `forge coverage --report summary --report lcov`
