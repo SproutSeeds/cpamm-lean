@@ -49,3 +49,20 @@ Index outputs:
 
 - `CASE_STUDIES_INDEX.md`
 - `CASE_STUDIES_ROLLUP.json`
+
+Generate a stable portal entrypoint artifact:
+
+```bash
+python3 scripts/case_study_portal.py \
+  --index-md reports/CASE_STUDIES_INDEX.md \
+  --rollup-json reports/CASE_STUDIES_ROLLUP.json \
+  --case-studies-dir artifacts/case-studies \
+  --out-dir artifacts/case-study-portal
+```
+
+Portal outputs:
+
+- `INDEX.md`
+- `CASE_STUDIES_INDEX.md`
+- `CASE_STUDIES_ROLLUP.json`
+- `MANIFEST.json`

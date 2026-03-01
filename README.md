@@ -156,6 +156,16 @@ python3 scripts/case_study_index.py \
   --json-out reports/CASE_STUDIES_ROLLUP.json
 ```
 
+Generate a stable case-study portal entrypoint:
+
+```bash
+python3 scripts/case_study_portal.py \
+  --index-md reports/CASE_STUDIES_INDEX.md \
+  --rollup-json reports/CASE_STUDIES_ROLLUP.json \
+  --case-studies-dir artifacts/case-studies \
+  --out-dir artifacts/case-study-portal
+```
+
 Generate a commercialization review package (dashboard + pipeline health + optional deal pack + optional portal):
 
 ```bash
@@ -223,6 +233,7 @@ Case-study publishing automation:
 - `.github/workflows/case-study-publish.yml`
 - Weekly scheduled case-study artifact refresh and manual dispatch support.
 - Supports manual single-input path or multi-input glob publication.
+- Produces stable portal entrypoint artifact (`case-study-portal/INDEX.md` + manifest).
 
 ## Security Validation
 

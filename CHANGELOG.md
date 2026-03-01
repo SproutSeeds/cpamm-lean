@@ -24,6 +24,7 @@ All notable changes to this project are documented in this file.
 - Added `scripts/outbound_sla_gate.py` to enforce outbound SLA thresholds (overdue/missing/stale ratios) with strict CI/cadence gating support.
 - Added `scripts/case_study_pack.py` to generate sanitized case-study artifacts (`CASE_STUDY.md` + summary JSON + manifest) from structured input.
 - Added `scripts/case_study_index.py` to generate portfolio-level case-study index and rollup artifacts.
+- Added `scripts/case_study_portal.py` to generate a stable case-study portal entrypoint (`INDEX.md` + manifest) for outbound linking.
 - Added `scripts/commercial_review_package.sh` to build a one-command commercialization evidence bundle (dashboard, pipeline health, optional deal pack, checksums, tarball).
 - Updated `scripts/commercial_review_package.sh` to include outbound focus + outbound SLA artifacts, optional case-study packaging, and case-study rollup outputs.
 - Extended `scripts/case_study_pack.py` with `--out-root` support for multi-case-study publication layouts.
@@ -43,6 +44,7 @@ All notable changes to this project are documented in this file.
 - Added `.github/workflows/evidence-portal-publish.yml` to publish evidence portal artifacts on schedule and manual dispatch.
 - Added `.github/workflows/case-study-publish.yml` to publish case-study package + rollup artifacts on schedule and manual dispatch.
 - Expanded `.github/workflows/case-study-publish.yml` to support multi-input glob resolution and multi-package publication.
+- Expanded `.github/workflows/case-study-publish.yml` to emit a dedicated `case-study-portal` landing artifact.
 - Added cadence automation configuration guide: `strategy/assets/ops/CADENCE_AUTOMATION_CONFIG.md`.
 - Added GitHub issue templates for execution cadence:
   - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`

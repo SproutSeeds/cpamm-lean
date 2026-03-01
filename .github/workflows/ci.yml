@@ -189,6 +189,18 @@ jobs:
             --out artifacts/case-studies-index.md \
             --json-out artifacts/case-studies-rollup.json \
             2>&1 | tee artifacts/case-study-index.log
+      - name: Case-study portal (template data)
+        run: |
+          set -o pipefail
+          python3 scripts/case_study_pack.py \
+            --input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json \
+            --out-root artifacts/case-studies
+          python3 scripts/case_study_portal.py \
+            --index-md artifacts/case-studies-index.md \
+            --rollup-json artifacts/case-studies-rollup.json \
+            --case-studies-dir artifacts/case-studies \
+            --out-dir artifacts/case-study-portal \
+            2>&1 | tee artifacts/case-study-portal.log
       - name: Outbound SLA gate (template data)
         run: |
           set -o pipefail
@@ -219,6 +231,8 @@ jobs:
             artifacts/case-study-index.log
             artifacts/case-studies-index.md
             artifacts/case-studies-rollup.json
+            artifacts/case-study-portal.log
+            artifacts/case-study-portal
             artifacts/outbound-sla.log
             artifacts/outbound-sla.md
             artifacts/outbound-sla.json

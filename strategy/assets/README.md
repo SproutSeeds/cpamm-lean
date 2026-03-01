@@ -192,4 +192,5 @@ Case-study publish automation:
 - Workflow: `.github/workflows/case-study-publish.yml`
 - Weekly scheduled refresh plus manual dispatch.
 - Publishes `case-study-publish` artifact with case-study packages + index rollup.
+- Includes stable portal entrypoint artifact under `case-study-portal/`.
 - Supports manual single-input path or multi-input glob publication.

@@ -115,6 +115,13 @@ jobs:
           ]
           subprocess.run(cmd, check=True)
           PY
+      - name: Build case-study portal entrypoint
+        run: |
+          python3 scripts/case_study_portal.py \
+            --index-md artifacts/CASE_STUDIES_INDEX.md \
+            --rollup-json artifacts/CASE_STUDIES_ROLLUP.json \
+            --case-studies-dir artifacts/case-studies \
+            --out-dir artifacts/case-study-portal
       - name: Build commercial package (optional)
         if: ${{ github.event_name == 'schedule' || inputs.include_commercial_package == true || inputs.include_commercial_package == 'true' }}
         env:
@@ -143,16 +150,16 @@ jobs:
             echo "- \`artifacts/case-studies\`"
             echo "- \`artifacts/CASE_STUDIES_INDEX.md\`"
             echo "- \`artifacts/CASE_STUDIES_ROLLUP.json\`"
+            echo "- \`artifacts/case-study-portal\`"
             if [[ -d artifacts/commercial-review-package ]]; then
               echo "- \`artifacts/commercial-review-package\`"
               echo "- \`artifacts/commercial-review-package.tar.gz\`"
             fi
             echo ""
-            first_case="$(find artifacts/case-studies -name CASE_STUDY.md | head -n 1 || true)"
-            if [[ -n "$first_case" ]]; then
-              tail -n 30 "$first_case"
+            if [[ -f artifacts/case-study-portal/INDEX.md ]]; then
+              tail -n 40 artifacts/case-study-portal/INDEX.md
             else
-              echo "(no CASE_STUDY.md files found)"
+              echo "(no case-study portal index found)"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -163,6 +170,7 @@ jobs:
             artifacts/case-studies
             artifacts/CASE_STUDIES_INDEX.md
             artifacts/CASE_STUDIES_ROLLUP.json
+            artifacts/case-study-portal
             artifacts/case-study-inputs.txt
             artifacts/commercial-review-package
             artifacts/commercial-review-package.tar.gz

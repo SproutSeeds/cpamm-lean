@@ -478,6 +478,93 @@ class StrategyToolingTests(unittest.TestCase):
             rollup = json.loads(out_json.read_text(encoding="utf-8"))
             self.assertEqual(rollup["rollup"]["case_study_count"], 2)
 
+    def test_case_study_portal_generates_entrypoint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            work = Path(tmp_dir)
+            case_root = work / "case-studies"
+            case_dir = case_root / "amm-launch-readiness-2026q1"
+            case_dir.mkdir(parents=True, exist_ok=True)
+            (case_dir / "CASE_STUDY.md").write_text("# Case Study\n", encoding="utf-8")
+
+            index_md = work / "CASE_STUDIES_INDEX.md"
+            index_md.write_text("# Case Studies Index\n", encoding="utf-8")
+            rollup_json = work / "CASE_STUDIES_ROLLUP.json"
+            rollup_json.write_text(
+                json.dumps(
+                    {
+                        "rollup": {
+                            "case_study_count": 1,
+                            "published_window": {"start": "2026-03-01", "end": "2026-03-01"},
+                            "totals": {
+                                "critical_findings_prevented": 3,
+                                "proof_obligations_closed": 7,
+                                "regression_escape_reduction": 2,
+                            },
+                            "averages": {
+                                "ci_gate_improvement_pct_points": 36,
+                                "time_to_green_reduction_days": 7,
+                            },
+                            "by_segment": {"protocol": 1},
+                        },
+                        "entries": [
+                            {
+                                "case_study_id": "amm-launch-readiness-2026q1",
+                                "title": "AMM Launch Readiness",
+                                "published_date": "2026-03-01",
+                                "client_segment": "protocol",
+                                "engagement_type": "verification_sprint",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            out_dir = work / "case-study-portal"
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/case_study_portal.py",
+                    "--index-md",
+                    str(index_md),
+                    "--rollup-json",
+                    str(rollup_json),
+                    "--case-studies-dir",
+                    str(case_root),
+                    "--out-dir",
+                    str(out_dir),
+                ]
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertTrue((out_dir / "INDEX.md").exists())
+            self.assertTrue((out_dir / "MANIFEST.json").exists())
+            self.assertTrue((out_dir / "CASE_STUDIES_INDEX.md").exists())
+            self.assertTrue((out_dir / "CASE_STUDIES_ROLLUP.json").exists())
+            self.assertTrue((out_dir / "case-studies/amm-launch-readiness-2026q1/CASE_STUDY.md").exists())
+            text = (out_dir / "INDEX.md").read_text(encoding="utf-8")
+            self.assertIn("Case Study Portal", text)
+            self.assertIn("amm-launch-readiness-2026q1", text)
+            self.assertIn("case-studies/amm-launch-readiness-2026q1/CASE_STUDY.md", text)
+
+    def test_case_study_portal_rejects_missing_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            work = Path(tmp_dir)
+            index_md = work / "CASE_STUDIES_INDEX.md"
+            index_md.write_text("# Index\n", encoding="utf-8")
+            bad_rollup = work / "BAD_ROLLUP.json"
+            bad_rollup.write_text(json.dumps({"rollup": {}}), encoding="utf-8")
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/case_study_portal.py",
+                    "--index-md",
+                    str(index_md),
+                    "--rollup-json",
+                    str(bad_rollup),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("missing 'entries' list", result.stdout)
+
     def test_deal_pack_generates_expected_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             out_dir = Path(tmp_dir) / "deal-pack"
