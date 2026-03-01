@@ -42,16 +42,35 @@ Current tokenized assumptions are explicit by construction:
 - assumption/test mapping is tracked in `reports/ASSUMPTION_TEST_MATRIX.md`
 - CI enforces matrix consistency via `scripts/validate_assumption_matrix.py`
 
-## Formalization Targets (Next)
+## Formalization Track Status
+
+Implemented:
 
 1. **Tighter Projection Interface**
-- Prove a reusable simulation theorem from tokenized traces directly to `SolidityReachable` traces.
+- `sim_tokenizedReachable_to_solidityReachable` proves trace-level simulation directly from tokenized traces into `SolidityReachable`.
 
-2. **Semantic Strengthening**
-- Lift behavior-taxonomy lemmas into step-level non-preservation theorems for unsupported classes.
+2. **Semantic Strengthening (step-level)**
+- `CPAMM/TokenizedBehavior.lean` now includes step-level incompatibility theorems for unsupported pull classes:
+  - `feeOnTransferPull_incompatible_tokenizedAddLiquidityX`
+  - `feeOnTransferPull_incompatible_tokenizedAddLiquidityY`
+  - `inflationaryPull_incompatible_tokenizedSwapXforY`
+  - `noOpPull_incompatible_tokenizedSwapYforX`
+- It also includes reserve-sync non-preservation theorems under external drift with unchanged core reserves:
+  - `reserveSync_not_preserved_by_externalDriftX`
+  - `reserveSync_not_preserved_by_externalDriftY`
 
 3. **Proof/Test Coupling Automation**
-- Add CI checks that enforce consistency between `reports/ASSUMPTION_TEST_MATRIX.md` and existing test names.
+- CI validation in `scripts/validate_assumption_matrix.py` now checks:
+  - fully-qualified test references resolve to real Solidity test functions
+  - Lean symbols in matrix Lean-encoding cells resolve to declarations in `CPAMM/*.lean`
+
+## Remaining Priority Work
+
+1. **Projection Abstraction Cleanup**
+- Factor shared tokenized/symbolic projection lemmas to reduce duplication across future token-integrated modules.
+
+2. **Unsupported-Behavior Coverage Expansion**
+- Add additional theorem/test pairs for unsupported output-path semantics where reserve-sync can remain true but user-observable transfer semantics diverge.
 
 ## Reviewer Guidance
 

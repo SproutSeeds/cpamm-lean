@@ -10,6 +10,40 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MATRIX = ROOT / "reports" / "ASSUMPTION_TEST_MATRIX.md"
 TEST_DIR = ROOT / "solidity" / "test"
+LEAN_DIR = ROOT / "CPAMM"
+
+LEAN_DECL_RE = re.compile(
+    r"^\s*(?:def|theorem|lemma|inductive|structure|abbrev|class|axiom)\s+([A-Za-z_][A-Za-z0-9_']*)",
+    re.MULTILINE,
+)
+IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_']*$")
+
+
+def collect_lean_symbols() -> set[str]:
+    symbols: set[str] = set()
+    for lean_file in sorted(LEAN_DIR.glob("*.lean")):
+        source = lean_file.read_text(encoding="utf-8")
+        symbols.update(LEAN_DECL_RE.findall(source))
+    return symbols
+
+
+def parse_lean_matrix_tokens(text: str) -> list[str]:
+    tokens: list[str] = []
+    for line in text.splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.split("|")[1:-1]]
+        if len(cells) < 4:
+            continue
+        if cells[0] == "Assumption / Behavior":
+            continue
+        if cells[0].startswith("---"):
+            continue
+        lean_cell = cells[1]
+        for token in re.findall(r"`([^`]+)`", lean_cell):
+            if IDENT_RE.fullmatch(token):
+                tokens.append(token)
+    return sorted(set(tokens))
 
 
 def main() -> int:
@@ -48,6 +82,14 @@ def main() -> int:
         if fn_pat.search(source) is None:
             errors.append(f"missing test function for `{ref}` in {file_path}")
 
+    lean_symbols = collect_lean_symbols()
+    lean_refs = parse_lean_matrix_tokens(text)
+    if not lean_refs:
+        errors.append("no Lean symbol references found in matrix Lean Encoding column")
+    for symbol in lean_refs:
+        if symbol not in lean_symbols:
+            errors.append(f"missing Lean symbol `{symbol}` in CPAMM/*.lean")
+
     if errors:
         print("assumption matrix validation failed:")
         for err in errors:
@@ -56,7 +98,8 @@ def main() -> int:
 
     print(
         "assumption matrix validation passed: "
-        f"{len(refs)} fully-qualified references verified"
+        f"{len(refs)} fully-qualified test references and "
+        f"{len(lean_refs)} Lean symbol references verified"
     )
     return 0
 

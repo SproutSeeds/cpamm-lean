@@ -275,6 +275,7 @@ CI enforcement now includes:
 - SARIF upload to GitHub Security for Slither findings
 - cached/retried Slither toolchain setup in CI for stability
 - assumption/test matrix validation gate (`scripts/validate_assumption_matrix.py`)
+  (validates both Solidity test references and Lean symbol references)
 
 ## What Is Proved
 

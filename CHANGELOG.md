@@ -18,6 +18,13 @@ All notable changes to this project are documented in this file.
 - Added `scripts/check_public_boundary.py` and CI `public-boundary` job to fail on tracked private/commercial-only files.
 - Updated commercial/cadence workflows to require `ENABLE_COMMERCIAL_AUTOMATION=true` before execution.
 - Updated strategy/readme docs to mark commercial automation as opt-in for private/forked environments.
+- Extended `CPAMM/TokenizedBehavior.lean` with step-level unsupported-behavior incompatibility theorems:
+  - exact-pull extraction lemmas from tokenized step relations
+  - non-exact pull incompatibility lemmas for tokenized add/swap transitions
+  - external-drift reserve-sync non-preservation lemmas with unchanged core reserves
+- Updated `reports/ASSUMPTION_TEST_MATRIX.md` to include the new step-level Lean theorem mappings.
+- Enhanced `scripts/validate_assumption_matrix.py` to validate Lean symbol references in addition to Solidity test references.
+- Updated tokenized verification docs (`VERIFICATION_TOKENIZED.md`, `VERIFICATION.md`) to reflect implemented trace-level projection, strengthened behavior lemmas, and matrix validation scope.
 - Added commercialization playbook docs under `strategy/`:
   - highest-EV path thesis and sequencing
   - evidence portal design/purpose and generation workflow
