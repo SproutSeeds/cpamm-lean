@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+- Added `strategy/README.md` to define the public technical vs private commercial boundary.
+- Removed tracked commercial playbook documents from `strategy/`:
+  - `HIGHEST_EV_PATH.md`
+  - `OFFER_AND_GTM.md`
+  - `REVENUE_MODEL.md`
+  - `EXECUTION_90_DAYS.md`
+  - `KPI_SCOREBOARD.md`
+  - `OPERATING_CADENCE.md`
+  - `LEGAL_COMPLIANCE_US.md`
+  - `FUNDRAISING_AND_DATA_ROOM.md`
+  - `RISK_REGISTER.md`
+- Added `scripts/check_public_boundary.py` and CI `public-boundary` job to fail on tracked private/commercial-only files.
+- Updated commercial/cadence workflows to require `ENABLE_COMMERCIAL_AUTOMATION=true` before execution.
+- Updated strategy/readme docs to mark commercial automation as opt-in for private/forked environments.
 - Added commercialization playbook docs under `strategy/`:
   - highest-EV path thesis and sequencing
   - evidence portal design/purpose and generation workflow

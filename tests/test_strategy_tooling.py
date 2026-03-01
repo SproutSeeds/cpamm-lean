@@ -866,6 +866,11 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertTrue((out_dir / "CASE_STUDIES_INDEX.md").exists())
             self.assertTrue((out_dir / "CASE_STUDIES_ROLLUP.json").exists())
 
+    def test_public_boundary_guard_passes(self) -> None:
+        result = run_cmd([PYTHON, "scripts/check_public_boundary.py"])
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        self.assertIn("public-boundary check passed", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

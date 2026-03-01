@@ -1,6 +1,7 @@
 # Execution Assets
 
-These are operational templates for running the commercialization plan.
+These are sanitized operational templates for running commercial workflows with private data.
+Keep live strategy/pipeline/account information in `strategy/private/` (gitignored).
 
 ## CRM
 
@@ -171,6 +172,7 @@ Cadence issue automation:
 - KPI runs generate/upload outbound digest artifacts and post a digest comment on the created cadence issue.
 - Optional SLA threshold/strictness vars are documented in `ops/CADENCE_AUTOMATION_CONFIG.md`.
 - Configuration guide: `ops/CADENCE_AUTOMATION_CONFIG.md`.
+- Workflow jobs are gated by repository variable `ENABLE_COMMERCIAL_AUTOMATION=true`.
 
 Commercial package CI artifact:
 
@@ -180,12 +182,14 @@ Commercial package CI artifact:
 - Includes outbound execution artifacts (`OUTBOUND_FOCUS.md`, `OUTBOUND_FOCUS.csv`, `OUTBOUND_SLA.md`, `OUTBOUND_SLA.json`).
 - Includes sanitized `case-study/` output when a case-study input is provided.
 - Includes case-study portfolio artifacts (`CASE_STUDIES_INDEX.md`, `CASE_STUDIES_ROLLUP.json`) when a case-study input is provided.
+- Job execution is gated by repository variable `ENABLE_COMMERCIAL_AUTOMATION=true`.
 
 Evidence portal publish automation:
 
 - Workflow: `.github/workflows/evidence-portal-publish.yml`
 - Weekly scheduled refresh plus manual dispatch.
 - Publishes `evidence-portal` artifact, and optional linked commercial package/case-study rollup artifact outputs.
+- Workflow job execution is gated by repository variable `ENABLE_COMMERCIAL_AUTOMATION=true`.
 
 Case-study publish automation:
 
@@ -194,3 +198,4 @@ Case-study publish automation:
 - Publishes `case-study-publish` artifact with case-study packages + index rollup.
 - Includes stable portal entrypoint artifact under `case-study-portal/`.
 - Supports manual single-input path or multi-input glob publication.
+- Workflow job execution is gated by repository variable `ENABLE_COMMERCIAL_AUTOMATION=true`.

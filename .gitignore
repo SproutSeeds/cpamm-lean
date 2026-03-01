@@ -13,6 +13,15 @@ artifacts/
 
 # Private commercialization operating data
 strategy/private/
+strategy/HIGHEST_EV_PATH.md
+strategy/OFFER_AND_GTM.md
+strategy/REVENUE_MODEL.md
+strategy/EXECUTION_90_DAYS.md
+strategy/KPI_SCOREBOARD.md
+strategy/OPERATING_CADENCE.md
+strategy/LEGAL_COMPLIANCE_US.md
+strategy/FUNDRAISING_AND_DATA_ROOM.md
+strategy/RISK_REGISTER.md
 strategy/assets/**/*.local.csv
 strategy/assets/**/*.local.md
 strategy/assets/crm/PIPELINE.csv

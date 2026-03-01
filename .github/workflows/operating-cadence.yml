@@ -30,8 +30,9 @@ permissions:
 jobs:
   kpi-issue:
     if: >-
-      (github.event_name == 'schedule' && github.event.schedule == '0 14 * * 1') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run_kpi == true || inputs.run_kpi == 'true'))
+      vars.ENABLE_COMMERCIAL_AUTOMATION == 'true' &&
+      ((github.event_name == 'schedule' && github.event.schedule == '0 14 * * 1') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run_kpi == true || inputs.run_kpi == 'true')))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -188,8 +189,9 @@ jobs:
 
   risk-issue:
     if: >-
-      (github.event_name == 'schedule' && github.event.schedule == '0 15 1 * *') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run_risk == true || inputs.run_risk == 'true'))
+      vars.ENABLE_COMMERCIAL_AUTOMATION == 'true' &&
+      ((github.event_name == 'schedule' && github.event.schedule == '0 15 1 * *') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run_risk == true || inputs.run_risk == 'true')))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
