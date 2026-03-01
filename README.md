@@ -92,6 +92,19 @@ python3 scripts/pipeline_health.py \
   --out reports/PIPELINE_HEALTH.md
 ```
 
+Generate a commercialization review package (dashboard + pipeline health + optional deal pack):
+
+```bash
+./scripts/commercial_review_package.sh \
+  --pipeline strategy/private/PIPELINE.csv \
+  --kpi strategy/private/KPI_TRACKER.csv \
+  --deal-input strategy/private/deals/example.json \
+  --as-of 2026-03-01
+```
+
+This writes a verifiable bundle under `artifacts/commercial-review-package-<utcstamp>/`
+plus a `.tar.gz` archive.
+
 Operating cadence issue templates are now included in:
 - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`
 - `.github/ISSUE_TEMPLATE/risk-register-review.md`

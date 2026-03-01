@@ -61,3 +61,15 @@ python3 scripts/pipeline_health.py \
   --as-of 2026-03-01 \
   --out reports/PIPELINE_HEALTH.md
 ```
+
+Generate a single commercialization review bundle:
+
+```bash
+./scripts/commercial_review_package.sh \
+  --pipeline strategy/private/PIPELINE.csv \
+  --kpi strategy/private/KPI_TRACKER.csv \
+  --deal-input strategy/private/deals/example.json \
+  --as-of 2026-03-01
+```
+
+Default bundle output path: `artifacts/commercial-review-package-<utcstamp>/`.

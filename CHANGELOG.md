@@ -19,6 +19,9 @@ All notable changes to this project are documented in this file.
 - Added `strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json` for structured deal-pack input.
 - Added `scripts/deal_pack.py` to render proposal/SOW docs from JSON input into `strategy/private/generated/<deal_id>/`.
 - Added `scripts/pipeline_health.py` to score funnel health and produce close-horizon forecast reports from CRM pipeline data.
+- Added `scripts/commercial_review_package.sh` to build a one-command commercialization evidence bundle (dashboard, pipeline health, optional deal pack, checksums, tarball).
+- Added strategy tooling regression tests in `tests/test_strategy_tooling.py`.
+- Added `strategy-tooling` CI gate to run script regression tests on every push/PR.
 - Added GitHub issue templates for execution cadence:
   - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`
   - `.github/ISSUE_TEMPLATE/risk-register-review.md`
