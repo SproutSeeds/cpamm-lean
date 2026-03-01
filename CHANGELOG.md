@@ -14,6 +14,8 @@ All notable changes to this project are documented in this file.
 - Added CI `protocol-intake` job in `.github/workflows/ci.yml` and attached intake artifact publication.
 - Added protocol intake test coverage in `tests/test_protocol_intake.py`.
 - Updated docs (`README.md`, `VERIFICATION.md`) with intake-gate commands and references.
+- Added `scripts/protocol_readiness_rehearsal.sh` to run strict-gate intake rehearsal against live RigidityCore target models and emit ready-to-prove packets.
+- Added readiness rehearsal report: `reports/PROTOCOL_READINESS_REHEARSAL.md`.
 - Added `PROTOCOL_TEMPLATE.md` defining the RigidityCore-to-cpamm-lean handoff contract:
   - pipeline ownership split
   - `System.json` schema-to-Lean mapping table grounded in `spec/SPEC.md`
@@ -47,6 +49,24 @@ All notable changes to this project are documented in this file.
 - Updated `reports/ASSUMPTION_TEST_MATRIX.md` to include the new step-level Lean theorem mappings.
 - Enhanced `scripts/validate_assumption_matrix.py` to validate Lean symbol references in addition to Solidity test references.
 - Updated tokenized verification docs (`VERIFICATION_TOKENIZED.md`, `VERIFICATION.md`) to reflect implemented trace-level projection, strengthened behavior lemmas, and matrix validation scope.
+- Extended `CPAMM/TokenizedBehavior.lean` with output-path recipient-fee semantics:
+  - `RecipientFeePush`
+  - `recipientFeePush_exactPushDelta`
+  - `recipientFeePush_receiver_not_exact`
+  - `reserveSync_preserved_by_recipientFeePushY`
+  - `reserveSync_and_outputDivergence_by_recipientFeePushY`
+- Extended `solidity/test/CPAMM.Tokenized.Adversarial.t.sol` with output-path divergence tests:
+  - `test_outputFeeOnPoolTransfer_breaksObservedSwapXforYOutput`
+  - `test_outputFeeOnPoolTransfer_breaksObservedSwapYforXOutput`
+- Updated token compatibility and assumption matrix docs to include output-path divergence behavior and theorem/test links.
+- Refactored `CPAMM/TokenizedRefinement.lean` with reusable step-level preservation theorems:
+  - `valid_preserved_tokenizedStep`
+  - `reserveSync_preserved_tokenizedStep`
+- Upgraded `scripts/review_package.sh` into a fuller reproducibility bundle:
+  - theorem inventory export (`theorem-inventory.md`)
+  - strict protocol intake report/log (`protocol-intake.md`, `protocol-intake.log`)
+  - checksummed inclusion in `SHA256SUMS`
+- Updated `reports/REVIEW_PACKAGE.md` and verification docs to reflect expanded bundle contents.
 - Added commercialization playbook docs under `strategy/`:
   - highest-EV path thesis and sequencing
   - evidence portal design/purpose and generation workflow

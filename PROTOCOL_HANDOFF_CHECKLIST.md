@@ -49,3 +49,11 @@ python3 scripts/intake_validate.py \
 - Handoff process mapping: `PROTOCOL_TEMPLATE.md`
 - Engagement scaffold: `Protocol/`
 - Example intake payloads: `Protocol/examples/cpamm/`
+
+## Cross-Repo Rehearsal
+
+Run a strict-gate readiness rehearsal against live RigidityCore target models (Aave/Balancer examples):
+
+```bash
+./scripts/protocol_readiness_rehearsal.sh /Users/codymitchell/Documents/code/RigidityCore
+```
