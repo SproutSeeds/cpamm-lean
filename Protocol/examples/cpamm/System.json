@@ -1,0 +1,159 @@
+{
+  "schema_version": "0.1",
+  "system_id": "cpamm_v1",
+  "name": "Constant Product AMM (dependency model)",
+  "domain": "amm",
+  "state_vars": [
+    {
+      "id": "x_reserve",
+      "type": "nat",
+      "description": "Reserve of token X"
+    },
+    {
+      "id": "y_reserve",
+      "type": "nat",
+      "description": "Reserve of token Y"
+    },
+    {
+      "id": "total_lp",
+      "type": "nat",
+      "description": "Total LP shares"
+    }
+  ],
+  "parameters": [
+    {
+      "id": "fee_bps",
+      "type": "nat",
+      "value": 30,
+      "description": "Fee in basis points"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "swap_x_for_y",
+      "name": "Swap X for Y",
+      "inputs": [
+        {
+          "id": "dx",
+          "type": "nat",
+          "description": "Token X input amount"
+        },
+        {
+          "id": "min_dy",
+          "type": "nat",
+          "description": "Minimum token Y output"
+        }
+      ],
+      "reads": ["x_reserve", "y_reserve"],
+      "writes": ["x_reserve", "y_reserve"],
+      "guard": {
+        "and": [
+          {
+            "cmp": {
+              "op": ">",
+              "left": {
+                "var": "dx"
+              },
+              "right": {
+                "const": 0,
+                "type": "nat"
+              }
+            }
+          }
+        ]
+      },
+      "update_model": {
+        "kind": "assignment_set",
+        "assignments": [
+          {
+            "target": "x_reserve",
+            "source_deps": ["x_reserve", "dx"],
+            "notes": "x reserve increases by net input"
+          },
+          {
+            "target": "y_reserve",
+            "source_deps": ["y_reserve", "x_reserve", "dx", "min_dy"],
+            "notes": "y reserve decreases by output"
+          }
+        ],
+        "rounding": [
+          {
+            "id": "swap_floor_div",
+            "type": "floor_div",
+            "depends_on": ["x_reserve", "y_reserve", "dx"],
+            "notes": "Integer division in quote computation"
+          }
+        ]
+      },
+      "tags": ["swap", "rounding"],
+      "notes": "Dependency-only v0.1 encoding"
+    },
+    {
+      "id": "add_liquidity",
+      "name": "Add liquidity",
+      "inputs": [
+        {
+          "id": "dx_add",
+          "type": "nat"
+        },
+        {
+          "id": "dy_add",
+          "type": "nat"
+        }
+      ],
+      "reads": ["x_reserve", "y_reserve", "total_lp"],
+      "writes": ["x_reserve", "y_reserve", "total_lp"],
+      "guard": {
+        "true": true
+      },
+      "update_model": {
+        "kind": "assignment_set",
+        "assignments": [
+          {
+            "target": "x_reserve",
+            "source_deps": ["x_reserve", "dx_add"]
+          },
+          {
+            "target": "y_reserve",
+            "source_deps": ["y_reserve", "dy_add"]
+          },
+          {
+            "target": "total_lp",
+            "source_deps": ["total_lp", "dx_add", "dy_add"]
+          }
+        ],
+        "rounding": []
+      },
+      "tags": ["liquidity"]
+    }
+  ],
+  "invariants": [
+    {
+      "id": "reserves_non_negative",
+      "name": "Reserves remain non-negative",
+      "depends_on": ["x_reserve", "y_reserve"],
+      "kind": "safety",
+      "predicate_stub": "x_reserve >= 0 && y_reserve >= 0",
+      "tags": ["safety"]
+    },
+    {
+      "id": "lp_supply_non_negative",
+      "name": "LP supply remains non-negative",
+      "depends_on": ["total_lp"],
+      "kind": "consistency",
+      "predicate_stub": "total_lp >= 0",
+      "tags": ["supply"]
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "token_transfer_exact",
+      "description": "Token transfer side-effects are not modeled",
+      "scope": "environment",
+      "tags": ["integration"]
+    }
+  ],
+  "metadata": {
+    "example": true
+  }
+}

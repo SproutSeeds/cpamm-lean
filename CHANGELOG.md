@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+- Added protocol intake validation gate:
+  - `scripts/intake_validate.py` validates RigidityCore `System.json` payloads and handoff gate metadata.
+  - strict-gate mode enforces all three Lean-start prerequisites.
+- Added protocol intake assets:
+  - `PROTOCOL_HANDOFF_CHECKLIST.md`
+  - `Protocol/examples/cpamm/System.json`
+  - `Protocol/examples/cpamm/HANDOFF_READY.json`
+- Added CI `protocol-intake` job in `.github/workflows/ci.yml` and attached intake artifact publication.
+- Added protocol intake test coverage in `tests/test_protocol_intake.py`.
+- Updated docs (`README.md`, `VERIFICATION.md`) with intake-gate commands and references.
 - Added `PROTOCOL_TEMPLATE.md` defining the RigidityCore-to-cpamm-lean handoff contract:
   - pipeline ownership split
   - `System.json` schema-to-Lean mapping table grounded in `spec/SPEC.md`

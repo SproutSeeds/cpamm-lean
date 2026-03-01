@@ -129,6 +129,10 @@ Gate rule before Lean starts:
 2. Audit dedup has no unresolved overlap for the lane.
 3. The lane shows measurable impact signal worth escalation.
 
+Intake enforcement:
+- `scripts/intake_validate.py` validates incoming `System.json` + handoff gate payloads.
+- CI runs a protocol-intake gate on template payloads in `Protocol/examples/cpamm/` with strict-gate mode.
+
 ## Rounding Bounds
 
 From `CPAMM/Rounding.lean`:

@@ -14,6 +14,35 @@ jobs:
       - name: Enforce public/private boundary
         run: python3 scripts/check_public_boundary.py
 
+  protocol-intake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - run: mkdir -p artifacts
+      - name: Validate protocol intake template payloads
+        run: |
+          set -o pipefail
+          python3 scripts/intake_validate.py \
+            --system-json Protocol/examples/cpamm/System.json \
+            --handoff-json Protocol/examples/cpamm/HANDOFF_READY.json \
+            --strict-gate \
+            --out artifacts/protocol-intake.md 2>&1 | tee artifacts/protocol-intake.log
+      - name: Protocol intake summary
+        run: |
+          {
+            echo "## Protocol Intake Gate"
+            echo ""
+            cat artifacts/protocol-intake.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: protocol-intake-artifacts
+          path: |
+            artifacts/protocol-intake.log
+            artifacts/protocol-intake.md
+          if-no-files-found: warn
+
   lean:
     runs-on: ubuntu-latest
     steps:
@@ -288,7 +317,7 @@ jobs:
 
   review-package:
     runs-on: ubuntu-latest
-    needs: [public-boundary, lean, solidity, security]
+    needs: [public-boundary, protocol-intake, lean, solidity, security]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: leanprover/lean-action@c544e89643240c6b398f14a431bcdc6309e36b3e # v1

@@ -1,0 +1,26 @@
+{
+  "schema_version": "0.1",
+  "handoff_id": "cpamm_v1_lane_swap_floor_div",
+  "system_id": "cpamm_v1",
+  "finding_id": "finding_cpamm_swap_floor_div",
+  "lane_id": "lane_cpamm_swap_floor_div",
+  "source_repo": "RigidityCore",
+  "target_repo": "cpamm-lean",
+  "gate": {
+    "contract_replay_determinism_established": true,
+    "audit_dedup_clear": true,
+    "measurable_impact_signal": true
+  },
+  "evidence": {
+    "replay_artifacts": [
+      "runs/cpamm/session1/replay.json",
+      "runs/cpamm/session1/trace.json"
+    ],
+    "dedup_record": "audits/cpamm/session1/dedup-clear.md",
+    "impact_summary": "Confirmed non-zero quantization window and materiality estimate recorded."
+  },
+  "assumptions": [
+    "Token transfer semantics remain within modeled bounds for this lane."
+  ],
+  "boundaries": "No governance/oracle assumptions included in this lane."
+}
