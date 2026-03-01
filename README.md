@@ -39,6 +39,19 @@ Generate a single reviewer bundle (logs, JSON, SARIF, LCOV, checksums):
 ./scripts/review_package.sh
 ```
 
+## Commercialization
+
+Business and execution playbooks for the highest-EV path are in `strategy/`:
+- [`strategy/HIGHEST_EV_PATH.md`](strategy/HIGHEST_EV_PATH.md)
+- [`strategy/OFFER_AND_GTM.md`](strategy/OFFER_AND_GTM.md)
+- [`strategy/REVENUE_MODEL.md`](strategy/REVENUE_MODEL.md)
+- [`strategy/EXECUTION_90_DAYS.md`](strategy/EXECUTION_90_DAYS.md)
+- [`strategy/KPI_SCOREBOARD.md`](strategy/KPI_SCOREBOARD.md)
+- [`strategy/OPERATING_CADENCE.md`](strategy/OPERATING_CADENCE.md)
+- [`strategy/LEGAL_COMPLIANCE_US.md`](strategy/LEGAL_COMPLIANCE_US.md)
+- [`strategy/FUNDRAISING_AND_DATA_ROOM.md`](strategy/FUNDRAISING_AND_DATA_ROOM.md)
+- [`strategy/RISK_REGISTER.md`](strategy/RISK_REGISTER.md)
+
 ## Security Validation
 
 Run differential fuzzing + baseline test suite:

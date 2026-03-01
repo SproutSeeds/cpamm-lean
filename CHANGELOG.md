@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 ## Unreleased
 
 - No unreleased changes yet.
+- Added commercialization playbook docs under `strategy/`:
+  - highest-EV path thesis and sequencing
+  - offer/GTM model and revenue model
+  - 90-day execution plan and KPI scoreboard
+  - operating cadence and risk register
+  - legal/compliance and fundraising/data-room checklists
 
 ## v1.5.0 - 2026-03-01
 
