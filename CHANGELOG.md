@@ -4,6 +4,10 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+- No unreleased changes yet.
+
+## v1.5.0 - 2026-03-01
+
 ### Added
 - Abstract full-withdrawal boundary model in Lean:
   - `RemoveLiquidityTerminal`
