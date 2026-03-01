@@ -1,0 +1,101 @@
+name: Evidence Portal Publish
+
+on:
+  schedule:
+    # Weekly sanitized portal artifact refresh for external/demo readiness.
+    - cron: "30 16 * * 1"
+  workflow_dispatch:
+    inputs:
+      portal_input_path:
+        description: "Portal input JSON path"
+        required: false
+        type: string
+        default: "strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json"
+      include_commercial_package:
+        description: "Build commercial package and link it in the portal"
+        required: false
+        type: boolean
+        default: true
+      copy_artifacts:
+        description: "Copy referenced artifacts into portal output"
+        required: false
+        type: boolean
+        default: true
+      as_of_date:
+        description: "As-of date (YYYY-MM-DD) for generated commercial package"
+        required: false
+        type: string
+        default: "2026-03-01"
+
+permissions:
+  contents: read
+
+jobs:
+  publish-portal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - run: mkdir -p artifacts
+      - name: Prepare portal input config
+        env:
+          INPUT_PATH: ${{ inputs.portal_input_path }}
+        run: |
+          if [[ -z "$INPUT_PATH" ]]; then
+            INPUT_PATH="strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json"
+          fi
+          echo "PORTAL_INPUT_PATH=$INPUT_PATH" >> "$GITHUB_ENV"
+      - name: Validate portal input
+        run: |
+          python3 scripts/validate_strategy_data.py --portal-input "$PORTAL_INPUT_PATH"
+      - name: Build commercial package (optional)
+        if: ${{ github.event_name == 'schedule' || inputs.include_commercial_package == true || inputs.include_commercial_package == 'true' }}
+        env:
+          AS_OF_DATE: ${{ inputs.as_of_date }}
+        run: |
+          if [[ -z "$AS_OF_DATE" ]]; then
+            AS_OF_DATE="2026-03-01"
+          fi
+          ./scripts/commercial_review_package.sh \
+            --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
+            --kpi strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv \
+            --deal-input strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json \
+            --portal-input "$PORTAL_INPUT_PATH" \
+            --as-of "$AS_OF_DATE" \
+            --out-dir artifacts/commercial-review-package
+      - name: Build evidence portal artifact
+        env:
+          COPY_ARTIFACTS: ${{ inputs.copy_artifacts }}
+        run: |
+          args=(
+            --input "$PORTAL_INPUT_PATH"
+            --portal-dir artifacts/evidence-portal
+          )
+          if [[ -d artifacts/commercial-review-package ]]; then
+            args+=(--commercial-package-dir artifacts/commercial-review-package)
+            if [[ "$COPY_ARTIFACTS" == "true" || "$COPY_ARTIFACTS" == "True" || "${{ github.event_name }}" == "schedule" ]]; then
+              args+=(--copy-artifacts)
+            fi
+          fi
+          python3 scripts/evidence_portal.py "${args[@]}"
+      - name: Evidence portal summary
+        run: |
+          {
+            echo "## Evidence Portal"
+            echo ""
+            echo "Generated bundle:"
+            echo "- \`artifacts/evidence-portal\`"
+            echo ""
+            tail -n 20 artifacts/evidence-portal/INDEX.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: evidence-portal
+          path: |
+            artifacts/evidence-portal
+            artifacts/commercial-review-package
+            artifacts/commercial-review-package.tar.gz
+          if-no-files-found: warn

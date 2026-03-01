@@ -39,11 +39,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REF_DATE: ${{ inputs.reference_date }}
+          KPI_ASSIGNEES: ${{ vars.CADENCE_KPI_ASSIGNEES }}
+          CADENCE_NOTIFY_WEBHOOK_URL: ${{ secrets.CADENCE_NOTIFY_WEBHOOK_URL }}
         run: |
           args=(--kind kpi)
           if [[ -n "$REF_DATE" ]]; then
             args+=(--reference-date "$REF_DATE")
           fi
+          if [[ -n "$KPI_ASSIGNEES" ]]; then
+            args+=(--assignees "$KPI_ASSIGNEES")
+          fi
+          args+=(--notify-webhook-env CADENCE_NOTIFY_WEBHOOK_URL)
           python3 scripts/create_cadence_issue.py "${args[@]}"
 
   risk-issue:
@@ -57,9 +63,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REF_DATE: ${{ inputs.reference_date }}
+          RISK_ASSIGNEES: ${{ vars.CADENCE_RISK_ASSIGNEES }}
+          CADENCE_NOTIFY_WEBHOOK_URL: ${{ secrets.CADENCE_NOTIFY_WEBHOOK_URL }}
         run: |
           args=(--kind risk)
           if [[ -n "$REF_DATE" ]]; then
             args+=(--reference-date "$REF_DATE")
           fi
+          if [[ -n "$RISK_ASSIGNEES" ]]; then
+            args+=(--assignees "$RISK_ASSIGNEES")
+          fi
+          args+=(--notify-webhook-env CADENCE_NOTIFY_WEBHOOK_URL)
           python3 scripts/create_cadence_issue.py "${args[@]}"

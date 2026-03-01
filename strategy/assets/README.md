@@ -28,6 +28,7 @@ These are operational templates for running the commercialization plan.
 
 - `ops/KPI_TRACKER_TEMPLATE.csv`
 - `ops/WEEKLY_DASHBOARD_TEMPLATE.md`
+- `ops/CADENCE_AUTOMATION_CONFIG.md`
 
 ## Automation
 
@@ -65,6 +66,16 @@ python3 scripts/pipeline_health.py \
   --pipeline strategy/private/PIPELINE.csv \
   --as-of 2026-03-01 \
   --out reports/PIPELINE_HEALTH.md
+```
+
+Generate a prioritized outbound focus queue:
+
+```bash
+python3 scripts/outbound_focus.py \
+  --pipeline strategy/private/PIPELINE.csv \
+  --as-of 2026-03-01 \
+  --out reports/OUTBOUND_FOCUS.md \
+  --csv-out reports/OUTBOUND_FOCUS.csv
 ```
 
 Validate operating data before running automation:
@@ -109,9 +120,19 @@ Cadence issue automation:
 - Workflow: `.github/workflows/operating-cadence.yml`
 - Uses `scripts/create_cadence_issue.py` to open recurring KPI and risk-review issues.
 - Supports manual workflow dispatch with optional `reference_date` override.
+- Supports optional assignee routing via repo variables (`CADENCE_KPI_ASSIGNEES`, `CADENCE_RISK_ASSIGNEES`).
+- Supports optional webhook notifications via secret `CADENCE_NOTIFY_WEBHOOK_URL`.
+- Configuration guide: `ops/CADENCE_AUTOMATION_CONFIG.md`.
 
 Commercial package CI artifact:
 
 - Workflow: `.github/workflows/ci.yml` job `commercial-review-package`
 - Builds a sanitized commercialization bundle from template data each push/PR.
 - Publishes artifact names: `commercial-review-package` directory and tarball.
+- Includes outbound execution artifacts (`OUTBOUND_FOCUS.md`, `OUTBOUND_FOCUS.csv`).
+
+Evidence portal publish automation:
+
+- Workflow: `.github/workflows/evidence-portal-publish.yml`
+- Weekly scheduled refresh plus manual dispatch.
+- Publishes `evidence-portal` artifact, and optional linked commercial package artifact outputs.

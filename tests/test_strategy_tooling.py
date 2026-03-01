@@ -104,6 +104,7 @@ class StrategyToolingTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(payload["title"], "[KPI] Weekly Review - 2026-03-02")
         self.assertIn("kpi-review", payload["labels"])
+        self.assertEqual(payload["assignees"], [])
         self.assertIn("Week start: 2026-03-02", payload["body"])
 
     def test_create_cadence_issue_dry_run_risk(self) -> None:
@@ -138,6 +139,41 @@ class StrategyToolingTests(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("reference date must be YYYY-MM-DD", result.stdout)
+
+    def test_create_cadence_issue_dry_run_with_assignees(self) -> None:
+        result = run_cmd(
+            [
+                PYTHON,
+                "scripts/create_cadence_issue.py",
+                "--kind",
+                "kpi",
+                "--reference-date",
+                "2026-03-02",
+                "--assignees",
+                "alice,bob-1",
+                "--notify-webhook-env",
+                "CADENCE_NOTIFY_WEBHOOK_URL",
+                "--dry-run",
+            ]
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["assignees"], ["alice", "bob-1"])
+
+    def test_create_cadence_issue_rejects_bad_assignee(self) -> None:
+        result = run_cmd(
+            [
+                PYTHON,
+                "scripts/create_cadence_issue.py",
+                "--kind",
+                "risk",
+                "--assignees",
+                "good,bad*name",
+                "--dry-run",
+            ]
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("invalid GitHub assignee login", result.stdout)
 
     def test_validate_strategy_data_passes_templates(self) -> None:
         result = run_cmd(
@@ -316,6 +352,55 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertIn("Total score:", report)
             self.assertIn("Stage Distribution (Open Only)", report)
 
+    def test_outbound_focus_generates_report_and_csv(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out_md = Path(tmp_dir) / "OUTBOUND_FOCUS.md"
+            out_csv = Path(tmp_dir) / "OUTBOUND_FOCUS.csv"
+            pipeline_csv = ROOT / "strategy/assets/crm/PIPELINE_TEMPLATE.csv"
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/outbound_focus.py",
+                    "--pipeline",
+                    str(pipeline_csv),
+                    "--as-of",
+                    "2026-03-01",
+                    "--out",
+                    str(out_md),
+                    "--csv-out",
+                    str(out_csv),
+                ]
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertTrue(out_md.exists())
+            self.assertTrue(out_csv.exists())
+
+            report = out_md.read_text(encoding="utf-8")
+            self.assertIn("# Outbound Focus Plan", report)
+            self.assertIn("Example Protocol A", report)
+            self.assertIn("Example Fund B", report)
+            self.assertNotIn("Example Protocol C", report)
+
+            csv_text = out_csv.read_text(encoding="utf-8")
+            self.assertIn("priority_score", csv_text)
+            self.assertIn("Example Protocol A", csv_text)
+
+    def test_outbound_focus_rejects_bad_as_of(self) -> None:
+        result = run_cmd(
+            [
+                PYTHON,
+                "scripts/outbound_focus.py",
+                "--pipeline",
+                "strategy/assets/crm/PIPELINE_TEMPLATE.csv",
+                "--as-of",
+                "2026-99-99",
+            ]
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("invalid --as-of date", result.stdout)
+
     def test_commercial_review_package_without_deal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             out_dir = Path(tmp_dir) / "commercial-package"
@@ -338,6 +423,8 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             self.assertTrue((out_dir / "WEEKLY_DASHBOARD.md").exists())
             self.assertTrue((out_dir / "PIPELINE_HEALTH.md").exists())
+            self.assertTrue((out_dir / "OUTBOUND_FOCUS.md").exists())
+            self.assertTrue((out_dir / "OUTBOUND_FOCUS.csv").exists())
             self.assertTrue((out_dir / "MANIFEST.md").exists())
             self.assertTrue((out_dir / "SHA256SUMS").exists())
             self.assertFalse((out_dir / "deal-pack").exists())

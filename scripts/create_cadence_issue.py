@@ -11,7 +11,7 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 
 
@@ -20,6 +20,7 @@ class IssuePayload:
     title: str
     body: str
     labels: list[str]
+    assignees: list[str] = field(default_factory=list)
 
 
 LABEL_DEFINITIONS: dict[str, tuple[str, str]] = {
@@ -36,6 +37,16 @@ def parse_ref_date(value: str | None) -> date:
         return date.fromisoformat(value)
     except ValueError as exc:
         raise ValueError(f"reference date must be YYYY-MM-DD, got {value!r}") from exc
+
+
+def parse_assignees(value: str | None) -> list[str]:
+    if value is None:
+        return []
+    assignees = [item.strip() for item in value.split(",") if item.strip()]
+    for login in assignees:
+        if not re.fullmatch(r"[A-Za-z0-9-]+", login):
+            raise ValueError(f"invalid GitHub assignee login: {login!r}")
+    return assignees
 
 
 def next_link(link_header: str | None) -> str | None:
@@ -211,18 +222,35 @@ class GitHubClient:
         return issues
 
     def create_issue(self, payload: IssuePayload) -> dict:
+        body = {
+            "title": payload.title,
+            "body": payload.body,
+            "labels": payload.labels,
+        }
+        if payload.assignees:
+            body["assignees"] = payload.assignees
         data, _ = self._api(
             "POST",
             f"/repos/{self.owner}/{self.name}/issues",
-            {
-                "title": payload.title,
-                "body": payload.body,
-                "labels": payload.labels,
-            },
+            body,
         )
         if not isinstance(data, dict):
             raise RuntimeError("unexpected API response when creating issue")
         return data
+
+
+def notify_webhook(url: str, payload: dict[str, object]) -> None:
+    request = urllib.request.Request(
+        url=url,
+        method="POST",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "cpamm-lean-cadence-automation",
+        },
+    )
+    with urllib.request.urlopen(request):
+        return
 
 
 def parse_args() -> argparse.Namespace:
@@ -243,6 +271,16 @@ def parse_args() -> argparse.Namespace:
         default="GITHUB_TOKEN",
         help="Environment variable name containing a GitHub token (default: GITHUB_TOKEN).",
     )
+    parser.add_argument(
+        "--assignees",
+        default="",
+        help="Optional comma-separated GitHub logins to assign (example: user1,user2).",
+    )
+    parser.add_argument(
+        "--notify-webhook-env",
+        default="",
+        help="Optional env var name containing a webhook URL to notify on issue creation.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print payload JSON and exit.")
     return parser.parse_args()
 
@@ -251,11 +289,17 @@ def main() -> int:
     args = parse_args()
     ref = parse_ref_date(args.reference_date)
     payload = build_payload(args.kind, ref)
+    payload.assignees = parse_assignees(args.assignees)
 
     if args.dry_run:
         print(
             json.dumps(
-                {"title": payload.title, "labels": payload.labels, "body": payload.body},
+                {
+                    "title": payload.title,
+                    "labels": payload.labels,
+                    "assignees": payload.assignees,
+                    "body": payload.body,
+                },
                 indent=2,
             )
         )
@@ -281,6 +325,27 @@ def main() -> int:
 
     created = client.create_issue(payload)
     print(f"created issue #{created.get('number')}: {created.get('html_url')}")
+
+    webhook_env = args.notify_webhook_env.strip()
+    webhook_url = os.environ.get(webhook_env, "").strip() if webhook_env else ""
+    if webhook_url:
+        notification = {
+            "text": f"[{args.kind.upper()}] {payload.title} ({created.get('html_url')})",
+            "event": "cadence_issue_created",
+            "kind": args.kind,
+            "title": payload.title,
+            "number": created.get("number"),
+            "url": created.get("html_url"),
+            "repo": args.repo,
+            "assignees": payload.assignees,
+            "reference_date": ref.isoformat(),
+        }
+        try:
+            notify_webhook(webhook_url, notification)
+            print(f"sent webhook notification via env: {webhook_env}")
+        except Exception as err:
+            print(f"warning: failed to send webhook notification: {err}")
+
     return 0
 
 

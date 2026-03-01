@@ -134,6 +134,13 @@ python3 "$ROOT_DIR/scripts/pipeline_health.py" \
   --as-of "$AS_OF_DATE" \
   --out "$OUT_DIR/PIPELINE_HEALTH.md"
 
+echo "==> outbound focus"
+python3 "$ROOT_DIR/scripts/outbound_focus.py" \
+  --pipeline "$PIPELINE_PATH" \
+  --as-of "$AS_OF_DATE" \
+  --out "$OUT_DIR/OUTBOUND_FOCUS.md" \
+  --csv-out "$OUT_DIR/OUTBOUND_FOCUS.csv"
+
 if [[ -n "$DEAL_INPUT_PATH" ]]; then
   echo "==> deal pack"
   python3 "$ROOT_DIR/scripts/deal_pack.py" \
@@ -181,11 +188,12 @@ GIT_STATUS="$(git -C "$ROOT_DIR" status --short || true)"
   echo "1. python3 scripts/validate_strategy_data.py --pipeline <pipeline> --kpi <kpi> [--deal-input <deal-json>]"
   echo "2. python3 scripts/strategy_dashboard.py --pipeline <pipeline> --kpi <kpi> --out <out>/WEEKLY_DASHBOARD.md"
   echo "3. python3 scripts/pipeline_health.py --pipeline <pipeline> --as-of <date> --out <out>/PIPELINE_HEALTH.md"
+  echo "4. python3 scripts/outbound_focus.py --pipeline <pipeline> --as-of <date> --out <out>/OUTBOUND_FOCUS.md --csv-out <out>/OUTBOUND_FOCUS.csv"
   if [[ -n "$DEAL_INPUT_PATH" ]]; then
-    echo "4. python3 scripts/deal_pack.py --input <deal-json> --out-dir <out>/deal-pack --include-acceptance-template"
+    echo "5. python3 scripts/deal_pack.py --input <deal-json> --out-dir <out>/deal-pack --include-acceptance-template"
   fi
   if [[ -n "$PORTAL_INPUT_PATH" ]]; then
-    echo "5. python3 scripts/evidence_portal.py --input <portal-json> --portal-dir <dir> --commercial-package-dir <out>"
+    echo "6. python3 scripts/evidence_portal.py --input <portal-json> --portal-dir <dir> --commercial-package-dir <out>"
   fi
 } > "$OUT_DIR/COMMANDS.txt"
 
@@ -200,6 +208,7 @@ Branch: $GIT_BRANCH
 
 - Weekly dashboard: WEEKLY_DASHBOARD.md
 - Pipeline health report: PIPELINE_HEALTH.md
+- Outbound focus queue: OUTBOUND_FOCUS.md + OUTBOUND_FOCUS.csv
 $(if [[ -n "$DEAL_INPUT_PATH" ]]; then echo "- Deal pack: deal-pack/"; fi)
 $(if [[ -n "$PORTAL_INPUT_PATH" ]]; then echo "- Evidence portal: ${PORTAL_DIR}"; fi)
 - Strategy data validation log: strategy-data-validation.log
@@ -217,6 +226,8 @@ EOF_MANIFEST
 CHECKSUM_FILES=(
   "COMMANDS.txt"
   "MANIFEST.md"
+  "OUTBOUND_FOCUS.csv"
+  "OUTBOUND_FOCUS.md"
   "PIPELINE_HEALTH.md"
   "strategy-data-validation.log"
   "WEEKLY_DASHBOARD.md"
