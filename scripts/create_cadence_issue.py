@@ -13,6 +13,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from pathlib import Path
 
 
 @dataclass
@@ -281,8 +282,21 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Optional env var name containing a webhook URL to notify on issue creation.",
     )
+    parser.add_argument(
+        "--result-json-out",
+        default="",
+        help="Optional path to write machine-readable result metadata.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print payload JSON and exit.")
     return parser.parse_args()
+
+
+def write_result_json(path_text: str, payload: dict[str, object]) -> None:
+    if not path_text.strip():
+        return
+    path = Path(path_text)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 def main() -> int:
@@ -290,19 +304,32 @@ def main() -> int:
     ref = parse_ref_date(args.reference_date)
     payload = build_payload(args.kind, ref)
     payload.assignees = parse_assignees(args.assignees)
+    result_base: dict[str, object] = {
+        "kind": args.kind,
+        "reference_date": ref.isoformat(),
+        "title": payload.title,
+        "labels": payload.labels,
+        "assignees": payload.assignees,
+    }
 
     if args.dry_run:
-        print(
-            json.dumps(
-                {
-                    "title": payload.title,
-                    "labels": payload.labels,
-                    "assignees": payload.assignees,
-                    "body": payload.body,
-                },
-                indent=2,
-            )
+        dry_run_payload = {
+            "title": payload.title,
+            "labels": payload.labels,
+            "assignees": payload.assignees,
+            "body": payload.body,
+        }
+        write_result_json(
+            args.result_json_out,
+            {
+                **result_base,
+                "status": "dry_run",
+                "issue_number": None,
+                "issue_url": None,
+                "dry_run_payload": dry_run_payload,
+            },
         )
+        print(json.dumps(dry_run_payload, indent=2))
         return 0
 
     token = os.environ.get(args.token_env, "")
@@ -321,10 +348,28 @@ def main() -> int:
             continue
         if issue.get("title") == payload.title:
             print(f"issue already exists, skipping: {payload.title}")
+            write_result_json(
+                args.result_json_out,
+                {
+                    **result_base,
+                    "status": "exists",
+                    "issue_number": issue.get("number"),
+                    "issue_url": issue.get("html_url"),
+                },
+            )
             return 0
 
     created = client.create_issue(payload)
     print(f"created issue #{created.get('number')}: {created.get('html_url')}")
+    write_result_json(
+        args.result_json_out,
+        {
+            **result_base,
+            "status": "created",
+            "issue_number": created.get("number"),
+            "issue_url": created.get("html_url"),
+        },
+    )
 
     webhook_env = args.notify_webhook_env.strip()
     webhook_url = os.environ.get(webhook_env, "").strip() if webhook_env else ""

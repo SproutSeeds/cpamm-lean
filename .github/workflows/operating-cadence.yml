@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - run: mkdir -p artifacts
       - name: Create KPI review issue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -50,7 +51,140 @@ jobs:
             args+=(--assignees "$KPI_ASSIGNEES")
           fi
           args+=(--notify-webhook-env CADENCE_NOTIFY_WEBHOOK_URL)
+          args+=(--result-json-out artifacts/kpi-issue-result.json)
           python3 scripts/create_cadence_issue.py "${args[@]}"
+      - name: Build outbound digest artifacts
+        env:
+          REF_DATE: ${{ inputs.reference_date }}
+          MAX_OVERDUE_RATIO: ${{ vars.CADENCE_MAX_OVERDUE_RATIO }}
+          MAX_MISSING_ACTION_RATIO: ${{ vars.CADENCE_MAX_MISSING_ACTION_RATIO }}
+          MAX_STALE_RATIO: ${{ vars.CADENCE_MAX_STALE_RATIO }}
+          SLA_STRICT: ${{ vars.CADENCE_OUTBOUND_SLA_STRICT }}
+        run: |
+          RUN_DATE="$REF_DATE"
+          if [[ -z "$RUN_DATE" ]]; then
+            RUN_DATE="$(date -u +%F)"
+          fi
+
+          python3 scripts/outbound_focus.py \
+            --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
+            --as-of "$RUN_DATE" \
+            --out artifacts/OUTBOUND_FOCUS.md \
+            --csv-out artifacts/OUTBOUND_FOCUS.csv \
+            --max-actions 10
+
+          sla_args=(
+            --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv
+            --as-of "$RUN_DATE"
+            --out artifacts/OUTBOUND_SLA.md
+            --json-out artifacts/OUTBOUND_SLA.json
+          )
+          if [[ -n "$MAX_OVERDUE_RATIO" ]]; then
+            sla_args+=(--max-overdue-ratio "$MAX_OVERDUE_RATIO")
+          fi
+          if [[ -n "$MAX_MISSING_ACTION_RATIO" ]]; then
+            sla_args+=(--max-missing-action-ratio "$MAX_MISSING_ACTION_RATIO")
+          fi
+          if [[ -n "$MAX_STALE_RATIO" ]]; then
+            sla_args+=(--max-stale-ratio "$MAX_STALE_RATIO")
+          fi
+          if [[ "$SLA_STRICT" == "true" || "$SLA_STRICT" == "True" || "$SLA_STRICT" == "1" || "$SLA_STRICT" == "yes" || "$SLA_STRICT" == "YES" ]]; then
+            sla_args+=(--strict)
+          fi
+          python3 scripts/outbound_sla_gate.py "${sla_args[@]}"
+
+          python3 - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          issue = json.loads(Path("artifacts/kpi-issue-result.json").read_text())
+          sla = json.loads(Path("artifacts/OUTBOUND_SLA.json").read_text())
+
+          lines = []
+          lines.append("## Outbound Digest")
+          lines.append("")
+          lines.append(f"- Cadence issue: {issue.get('issue_url') or 'n/a'}")
+          lines.append(f"- SLA status: {sla.get('status', 'unknown').upper()}")
+          lines.append(f"- Candidate opportunities: {sla.get('candidate_count', 0)}")
+          lines.append(f"- Overdue actions: {sla.get('overdue_count', 0)} ({sla.get('overdue_ratio', 0.0):.1%})")
+          lines.append(f"- Missing next action: {sla.get('missing_action_count', 0)} ({sla.get('missing_action_ratio', 0.0):.1%})")
+          lines.append(f"- Stale opportunities: {sla.get('stale_count', 0)} ({sla.get('stale_ratio', 0.0):.1%})")
+          lines.append("")
+          lines.append("### Top Outbound Actions")
+          lines.append("")
+          lines.append("| Rank | Account | Owner | Action | Due | Priority |")
+          lines.append("|---:|---|---|---|---|---:|")
+          with Path("artifacts/OUTBOUND_FOCUS.csv").open(newline="", encoding="utf-8") as fh:
+              for row in list(csv.DictReader(fh))[:5]:
+                  lines.append(
+                      f"| {row.get('rank', '')} | {row.get('account_name', '')} | "
+                      f"{row.get('owner', '')} | {row.get('next_action', '') or '-'} | "
+                      f"{row.get('next_action_date', '')} | {row.get('priority_score', '')} |"
+                  )
+          lines.append("")
+          lines.append("_Artifacts: OUTBOUND_FOCUS.md, OUTBOUND_FOCUS.csv, OUTBOUND_SLA.md, OUTBOUND_SLA.json_")
+          Path("artifacts/OUTBOUND_DIGEST.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print("wrote outbound digest: artifacts/OUTBOUND_DIGEST.md")
+          PY
+      - name: Post outbound digest comment to cadence issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          issue = json.loads(Path("artifacts/kpi-issue-result.json").read_text())
+          issue_number = issue.get("issue_number")
+          if issue_number is None:
+              print("no cadence issue number found; skipping comment")
+              raise SystemExit(0)
+
+          body = Path("artifacts/OUTBOUND_DIGEST.md").read_text(encoding="utf-8")
+          token = os.environ.get("GITHUB_TOKEN", "")
+          repo = os.environ.get("REPO", "")
+          if not token or not repo:
+              print("missing token/repo; skipping comment")
+              raise SystemExit(0)
+
+          url = f"https://api.github.com/repos/{repo}/issues/{issue_number}/comments"
+          req = urllib.request.Request(
+              url=url,
+              method="POST",
+              data=json.dumps({"body": body}).encode("utf-8"),
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {token}",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "User-Agent": "cpamm-lean-cadence-automation",
+              },
+          )
+          with urllib.request.urlopen(req) as resp:
+              print(f"posted digest comment to issue #{issue_number}: HTTP {resp.status}")
+          PY
+      - name: KPI digest summary
+        run: |
+          {
+            echo "## KPI Outbound Digest"
+            echo ""
+            cat artifacts/OUTBOUND_DIGEST.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: kpi-outbound-digest
+          path: |
+            artifacts/kpi-issue-result.json
+            artifacts/OUTBOUND_DIGEST.md
+            artifacts/OUTBOUND_FOCUS.md
+            artifacts/OUTBOUND_FOCUS.csv
+            artifacts/OUTBOUND_SLA.md
+            artifacts/OUTBOUND_SLA.json
+          if-no-files-found: warn
 
   risk-issue:
     if: >-
@@ -59,6 +193,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - run: mkdir -p artifacts
       - name: Create risk review issue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,4 +209,11 @@ jobs:
             args+=(--assignees "$RISK_ASSIGNEES")
           fi
           args+=(--notify-webhook-env CADENCE_NOTIFY_WEBHOOK_URL)
+          args+=(--result-json-out artifacts/risk-issue-result.json)
           python3 scripts/create_cadence_issue.py "${args[@]}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: risk-cadence-result
+          path: artifacts/risk-issue-result.json
+          if-no-files-found: warn

@@ -78,6 +78,17 @@ python3 scripts/outbound_focus.py \
   --csv-out reports/OUTBOUND_FOCUS.csv
 ```
 
+Run outbound SLA checks:
+
+```bash
+python3 scripts/outbound_sla_gate.py \
+  --pipeline strategy/private/PIPELINE.csv \
+  --as-of 2026-03-01 \
+  --out reports/OUTBOUND_SLA.md \
+  --json-out reports/OUTBOUND_SLA.json \
+  --strict
+```
+
 Validate operating data before running automation:
 
 ```bash
@@ -122,6 +133,8 @@ Cadence issue automation:
 - Supports manual workflow dispatch with optional `reference_date` override.
 - Supports optional assignee routing via repo variables (`CADENCE_KPI_ASSIGNEES`, `CADENCE_RISK_ASSIGNEES`).
 - Supports optional webhook notifications via secret `CADENCE_NOTIFY_WEBHOOK_URL`.
+- KPI runs generate/upload outbound digest artifacts and post a digest comment on the created cadence issue.
+- Optional SLA threshold/strictness vars are documented in `ops/CADENCE_AUTOMATION_CONFIG.md`.
 - Configuration guide: `ops/CADENCE_AUTOMATION_CONFIG.md`.
 
 Commercial package CI artifact:
@@ -129,7 +142,7 @@ Commercial package CI artifact:
 - Workflow: `.github/workflows/ci.yml` job `commercial-review-package`
 - Builds a sanitized commercialization bundle from template data each push/PR.
 - Publishes artifact names: `commercial-review-package` directory and tarball.
-- Includes outbound execution artifacts (`OUTBOUND_FOCUS.md`, `OUTBOUND_FOCUS.csv`).
+- Includes outbound execution artifacts (`OUTBOUND_FOCUS.md`, `OUTBOUND_FOCUS.csv`, `OUTBOUND_SLA.md`, `OUTBOUND_SLA.json`).
 
 Evidence portal publish automation:
 

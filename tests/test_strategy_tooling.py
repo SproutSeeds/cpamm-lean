@@ -141,24 +141,33 @@ class StrategyToolingTests(unittest.TestCase):
         self.assertIn("reference date must be YYYY-MM-DD", result.stdout)
 
     def test_create_cadence_issue_dry_run_with_assignees(self) -> None:
-        result = run_cmd(
-            [
-                PYTHON,
-                "scripts/create_cadence_issue.py",
-                "--kind",
-                "kpi",
-                "--reference-date",
-                "2026-03-02",
-                "--assignees",
-                "alice,bob-1",
-                "--notify-webhook-env",
-                "CADENCE_NOTIFY_WEBHOOK_URL",
-                "--dry-run",
-            ]
-        )
-        self.assertEqual(result.returncode, 0, msg=result.stderr)
-        payload = json.loads(result.stdout)
-        self.assertEqual(payload["assignees"], ["alice", "bob-1"])
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            result_path = Path(tmp_dir) / "kpi-result.json"
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/create_cadence_issue.py",
+                    "--kind",
+                    "kpi",
+                    "--reference-date",
+                    "2026-03-02",
+                    "--assignees",
+                    "alice,bob-1",
+                    "--notify-webhook-env",
+                    "CADENCE_NOTIFY_WEBHOOK_URL",
+                    "--result-json-out",
+                    str(result_path),
+                    "--dry-run",
+                ]
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["assignees"], ["alice", "bob-1"])
+            self.assertTrue(result_path.exists())
+            meta = json.loads(result_path.read_text(encoding="utf-8"))
+            self.assertEqual(meta["status"], "dry_run")
+            self.assertEqual(meta["kind"], "kpi")
+            self.assertEqual(meta["issue_number"], None)
 
     def test_create_cadence_issue_rejects_bad_assignee(self) -> None:
         result = run_cmd(
@@ -401,6 +410,69 @@ class StrategyToolingTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("invalid --as-of date", result.stdout)
 
+    def test_outbound_sla_gate_passes_template(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out_md = Path(tmp_dir) / "OUTBOUND_SLA.md"
+            out_json = Path(tmp_dir) / "OUTBOUND_SLA.json"
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/outbound_sla_gate.py",
+                    "--pipeline",
+                    "strategy/assets/crm/PIPELINE_TEMPLATE.csv",
+                    "--as-of",
+                    "2026-03-01",
+                    "--out",
+                    str(out_md),
+                    "--json-out",
+                    str(out_json),
+                    "--strict",
+                ]
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertTrue(out_md.exists())
+            self.assertTrue(out_json.exists())
+
+            md = out_md.read_text(encoding="utf-8")
+            payload = json.loads(out_json.read_text(encoding="utf-8"))
+            self.assertIn("# Outbound SLA Gate", md)
+            self.assertEqual(payload["status"], "pass")
+
+    def test_outbound_sla_gate_strict_fails_on_overdue(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            bad_pipeline = Path(tmp_dir) / "PIPELINE_BAD.csv"
+            bad_pipeline.write_text(
+                (
+                    "account_name,segment,contact_name,contact_role,contact_email,status,stage,deal_type,"
+                    "acv_usd,probability_pct,expected_close_date,owner,next_action,next_action_date,last_touch_date,notes\n"
+                    "Bad Protocol,protocol,Jane Doe,CTO,jane@example.org,open,discovery,sprint,50000,50,2026-06-01,"
+                    "founder,Send follow-up,2026-01-01,2026-01-01,stale + overdue\n"
+                ),
+                encoding="utf-8",
+            )
+            out_json = Path(tmp_dir) / "OUTBOUND_SLA.json"
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/outbound_sla_gate.py",
+                    "--pipeline",
+                    str(bad_pipeline),
+                    "--as-of",
+                    "2026-03-01",
+                    "--json-out",
+                    str(out_json),
+                    "--max-overdue-ratio",
+                    "0.00",
+                    "--strict",
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("SLA breaches detected", result.stdout)
+            payload = json.loads(out_json.read_text(encoding="utf-8"))
+            self.assertEqual(payload["status"], "fail")
+
     def test_commercial_review_package_without_deal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             out_dir = Path(tmp_dir) / "commercial-package"
@@ -425,6 +497,8 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertTrue((out_dir / "PIPELINE_HEALTH.md").exists())
             self.assertTrue((out_dir / "OUTBOUND_FOCUS.md").exists())
             self.assertTrue((out_dir / "OUTBOUND_FOCUS.csv").exists())
+            self.assertTrue((out_dir / "OUTBOUND_SLA.md").exists())
+            self.assertTrue((out_dir / "OUTBOUND_SLA.json").exists())
             self.assertTrue((out_dir / "MANIFEST.md").exists())
             self.assertTrue((out_dir / "SHA256SUMS").exists())
             self.assertFalse((out_dir / "deal-pack").exists())

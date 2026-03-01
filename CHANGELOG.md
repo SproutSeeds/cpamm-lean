@@ -21,8 +21,9 @@ All notable changes to this project are documented in this file.
 - Added `scripts/deal_pack.py` to render proposal/SOW docs from JSON input into `strategy/private/generated/<deal_id>/`.
 - Added `scripts/pipeline_health.py` to score funnel health and produce close-horizon forecast reports from CRM pipeline data.
 - Added `scripts/outbound_focus.py` to generate a prioritized weekly outbound execution queue (`OUTBOUND_FOCUS.md` + `OUTBOUND_FOCUS.csv`) from CRM pipeline data.
+- Added `scripts/outbound_sla_gate.py` to enforce outbound SLA thresholds (overdue/missing/stale ratios) with strict CI/cadence gating support.
 - Added `scripts/commercial_review_package.sh` to build a one-command commercialization evidence bundle (dashboard, pipeline health, optional deal pack, checksums, tarball).
-- Updated `scripts/commercial_review_package.sh` to include outbound focus artifacts in every generated package.
+- Updated `scripts/commercial_review_package.sh` to include outbound focus + outbound SLA artifacts in every generated package.
 - Added `scripts/validate_strategy_data.py` with strict schema/range/date checks for pipeline CSV, KPI CSV, and deal JSON.
 - Added `scripts/evidence_portal.py` to generate multi-page client-facing evidence portals from engagement metadata and artifact bundles.
 - Added evidence portal templates under `strategy/assets/portal/` (`PORTAL_INPUT_TEMPLATE.json` + usage README).
@@ -30,14 +31,17 @@ All notable changes to this project are documented in this file.
 - Added assignee routing and optional webhook notification support to cadence issue creation (`CADENCE_KPI_ASSIGNEES`, `CADENCE_RISK_ASSIGNEES`, `CADENCE_NOTIFY_WEBHOOK_URL`).
 - Added strategy tooling regression tests in `tests/test_strategy_tooling.py`.
 - Added `strategy-tooling` CI gate checks for strategy-data validation (including portal input) and script regression tests on every push/PR.
+- Added strict outbound SLA CI gate in `strategy-tooling` job (`scripts/outbound_sla_gate.py` over template data).
 - Added `commercial-review-package` CI job to build and upload a sanitized commercialization evidence artifact on every push/PR, including optional evidence portal generation from template input.
 - Added `.github/workflows/operating-cadence.yml` to auto-open weekly KPI and monthly risk review issues (plus manual dispatch support).
+- Extended `.github/workflows/operating-cadence.yml` with KPI outbound digest generation, artifact upload, and issue-thread digest comments.
 - Added `.github/workflows/evidence-portal-publish.yml` to publish evidence portal artifacts on schedule and manual dispatch.
 - Added cadence automation configuration guide: `strategy/assets/ops/CADENCE_AUTOMATION_CONFIG.md`.
 - Added GitHub issue templates for execution cadence:
   - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`
   - `.github/ISSUE_TEMPLATE/risk-register-review.md`
 - Hardened `.gitignore` for private commercialization data (`strategy/private/*`, live CRM/KPI files, and generated weekly/pipeline reports).
+- Extended `.gitignore` with outbound report outputs (`reports/OUTBOUND_*`) to reduce risk of committing private pipeline activity data.
 - Updated commercialization docs with deal-pack and pipeline-health automation commands.
 
 ## v1.5.0 - 2026-03-01

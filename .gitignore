@@ -23,3 +23,10 @@ reports/WEEKLY_DASHBOARD.md
 reports/WEEKLY_DASHBOARD_PRIVATE.md
 reports/PIPELINE_HEALTH.md
 reports/PIPELINE_HEALTH_PRIVATE.md
+reports/OUTBOUND_FOCUS.md
+reports/OUTBOUND_FOCUS.csv
+reports/OUTBOUND_SLA.md
+reports/OUTBOUND_SLA.json
+reports/OUTBOUND_*_PRIVATE.md
+reports/OUTBOUND_*_PRIVATE.csv
+reports/OUTBOUND_*_PRIVATE.json

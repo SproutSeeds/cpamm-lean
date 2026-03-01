@@ -180,12 +180,25 @@ jobs:
         run: |
           set -o pipefail
           python3 -m unittest discover -s tests -p "test_*.py" -v 2>&1 | tee artifacts/strategy-tooling.log
+      - name: Outbound SLA gate (template data)
+        run: |
+          set -o pipefail
+          python3 scripts/outbound_sla_gate.py \
+            --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
+            --as-of 2026-03-01 \
+            --out artifacts/outbound-sla.md \
+            --json-out artifacts/outbound-sla.json \
+            --strict 2>&1 | tee artifacts/outbound-sla.log
       - name: Strategy tooling summary
         run: |
           {
             echo "## Strategy Tooling Gate"
             echo ""
             tail -n 20 artifacts/strategy-tooling.log
+            echo ""
+            echo "### Outbound SLA"
+            echo ""
+            cat artifacts/outbound-sla.md
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
@@ -194,6 +207,9 @@ jobs:
           path: |
             artifacts/strategy-data-validation.log
             artifacts/strategy-tooling.log
+            artifacts/outbound-sla.log
+            artifacts/outbound-sla.md
+            artifacts/outbound-sla.json
           if-no-files-found: warn
 
   commercial-review-package:
