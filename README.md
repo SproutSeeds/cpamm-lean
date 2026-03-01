@@ -39,6 +39,12 @@ Generate a single reviewer bundle (logs, JSON, SARIF, LCOV, checksums):
 ./scripts/review_package.sh
 ```
 
+Validate theorem inventory references in `VERIFICATION.md` against Lean declarations:
+
+```bash
+python3 scripts/validate_theorem_inventory.py
+```
+
 ## Protocol Intake Gate
 
 Validate a RigidityCore handoff payload before starting new Lean engagement work:

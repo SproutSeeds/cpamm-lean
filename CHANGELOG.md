@@ -7,6 +7,10 @@ All notable changes to this project are documented in this file.
 - Added protocol intake validation gate:
   - `scripts/intake_validate.py` validates RigidityCore `System.json` payloads and handoff gate metadata.
   - strict-gate mode enforces all three Lean-start prerequisites.
+- Added theorem inventory integrity gate:
+  - `scripts/validate_theorem_inventory.py` validates `VERIFICATION.md` theorem entries against actual `theorem` declarations in referenced Lean files.
+  - CI `lean` job now runs theorem-inventory validation and publishes `artifacts/theorem-inventory-validation.log`.
+  - `scripts/review_package.sh` now includes theorem-inventory validation evidence in the reviewer bundle.
 - Added protocol intake assets:
   - `PROTOCOL_HANDOFF_CHECKLIST.md`
   - `Protocol/examples/cpamm/System.json`

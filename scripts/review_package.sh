@@ -70,6 +70,11 @@ for lean_file in sorted(cpamm_dir.glob("*.lean")):
 print(f"Total theorems: `{total}`")
 PY
 
+echo "==> theorem inventory validation"
+python3 "$ROOT_DIR/scripts/validate_theorem_inventory.py" \
+  --verification-md "$ROOT_DIR/VERIFICATION.md" \
+  --root "$ROOT_DIR" 2>&1 | tee "$OUT_DIR/theorem-inventory-validation.log"
+
 echo "==> forge test (human log)"
 (
   cd "$ROOT_DIR/solidity"
@@ -175,11 +180,12 @@ cat > "$OUT_DIR/COMMANDS.txt" <<'EOF_CMDS'
 2. lake build
 3. python3 theorem inventory generator over CPAMM/*.lean
 4. (cd solidity && forge test --gas-report)
-5. (cd solidity && forge test --json)
-6. (cd solidity && forge coverage --report summary --report lcov)
-7. python3 coverage gate parser (same thresholds as CI)
-8. SLITHER_SARIF=<out>/slither.sarif ./scripts/security/slither.sh
-9. python3 scripts/intake_validate.py --strict-gate (template payloads)
+5. python3 scripts/validate_theorem_inventory.py
+6. (cd solidity && forge test --json)
+7. (cd solidity && forge coverage --report summary --report lcov)
+8. python3 coverage gate parser (same thresholds as CI)
+9. SLITHER_SARIF=<out>/slither.sarif ./scripts/security/slither.sh
+10. python3 scripts/intake_validate.py --strict-gate (template payloads)
 EOF_CMDS
 
 cat > "$OUT_DIR/MANIFEST.md" <<EOF_MANIFEST
@@ -194,6 +200,7 @@ Branch: $GIT_BRANCH
 - Lean cache log: lake-cache.log
 - Lean build log: lake-build.log
 - Theorem inventory: theorem-inventory.md
+- Theorem inventory validation log: theorem-inventory-validation.log
 - Forge human log: forge-test.log
 - Forge JSON report: forge-test.json
 - Forge coverage log: forge-coverage.log
@@ -237,6 +244,7 @@ EOF_MANIFEST
     slither.log \
     slither.sarif \
     theorem-inventory.md \
+    theorem-inventory-validation.log \
     versions.txt > SHA256SUMS
 )
 

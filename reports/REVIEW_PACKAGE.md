@@ -21,17 +21,18 @@ You can also pass an explicit output path:
 1. `lake exe cache get`
 2. `lake build`
 3. theorem inventory generation over `CPAMM/*.lean`
-4. `forge test --gas-report`
-5. `forge test --json`
-6. `forge coverage --report summary --report lcov`
-7. Coverage threshold parser (same gates as CI)
-8. `./scripts/security/slither.sh` with SARIF output
-9. strict protocol intake validation over template handoff payloads
+4. theorem inventory validation against `VERIFICATION.md`
+5. `forge test --gas-report`
+6. `forge test --json`
+7. `forge coverage --report summary --report lcov`
+8. Coverage threshold parser (same gates as CI)
+9. `./scripts/security/slither.sh` with SARIF output
+10. strict protocol intake validation over template handoff payloads
 
 ## Bundle Contents
 
 - Lean logs: `lake-cache.log`, `lake-build.log`
-- Theorem inventory: `theorem-inventory.md`
+- Theorem evidence: `theorem-inventory.md`, `theorem-inventory-validation.log`
 - Solidity test logs: `forge-test.log`, `forge-test.json`
 - Coverage evidence: `forge-coverage.log`, `lcov.info`, `coverage-gate.log`
 - Security evidence: `slither.log`, `slither.sarif`
