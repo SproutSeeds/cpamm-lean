@@ -52,6 +52,21 @@ Business and execution playbooks for the highest-EV path are in `strategy/`:
 - [`strategy/FUNDRAISING_AND_DATA_ROOM.md`](strategy/FUNDRAISING_AND_DATA_ROOM.md)
 - [`strategy/RISK_REGISTER.md`](strategy/RISK_REGISTER.md)
 
+Execution templates and trackers are in:
+- [`strategy/assets/README.md`](strategy/assets/README.md)
+- [`strategy/assets/crm/CRM_SCHEMA.md`](strategy/assets/crm/CRM_SCHEMA.md)
+- [`strategy/assets/crm/PIPELINE_TEMPLATE.csv`](strategy/assets/crm/PIPELINE_TEMPLATE.csv)
+- [`strategy/assets/ops/KPI_TRACKER.csv`](strategy/assets/ops/KPI_TRACKER.csv)
+
+Generate weekly business dashboard from trackers:
+
+```bash
+python3 scripts/strategy_dashboard.py \
+  --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
+  --kpi strategy/assets/ops/KPI_TRACKER.csv \
+  --out reports/WEEKLY_DASHBOARD.md
+```
+
 ## Security Validation
 
 Run differential fuzzing + baseline test suite:

@@ -1,0 +1,2 @@
+week_start,verified_releases,paid_customers,mrr_usd,time_to_green_days,discovery_calls,proposal_win_rate_pct,sprint_to_retainer_pct,nrr_pct,critical_issues_found,regression_escapes,ci_gate_pass_rate_pct,evidence_pkg_success_pct,automation_pct,support_tickets_per_customer,mttr_hours,notes
+2026-03-01,4,3,42000,1.8,12,28,33,108,7,0,97,100,52,1.3,9.5,Baseline week after v1.5.0

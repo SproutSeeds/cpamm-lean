@@ -11,6 +11,12 @@ All notable changes to this project are documented in this file.
   - 90-day execution plan and KPI scoreboard
   - operating cadence and risk register
   - legal/compliance and fundraising/data-room checklists
+- Added execution assets under `strategy/assets/`:
+  - CRM schema and pipeline CSV template
+  - outbound, discovery, and follow-up sales templates
+  - proposal, SOW, and acceptance-criteria templates
+  - KPI tracker and weekly dashboard template
+- Added `scripts/strategy_dashboard.py` to generate `reports/WEEKLY_DASHBOARD.md` from CRM/KPI trackers.
 
 ## v1.5.0 - 2026-03-01
 
