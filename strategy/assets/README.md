@@ -124,6 +124,15 @@ python3 scripts/case_study_index.py \
   --json-out reports/CASE_STUDIES_ROLLUP.json
 ```
 
+Generate portfolio index from a glob:
+
+```bash
+python3 scripts/case_study_index.py \
+  --input-glob "strategy/private/case-studies/*.json" \
+  --out reports/CASE_STUDIES_INDEX.md \
+  --json-out reports/CASE_STUDIES_ROLLUP.json
+```
+
 Generate a single commercialization review bundle:
 
 ```bash
@@ -176,10 +185,11 @@ Evidence portal publish automation:
 
 - Workflow: `.github/workflows/evidence-portal-publish.yml`
 - Weekly scheduled refresh plus manual dispatch.
-- Publishes `evidence-portal` artifact, and optional linked commercial package artifact outputs.
+- Publishes `evidence-portal` artifact, and optional linked commercial package/case-study rollup artifact outputs.
 
 Case-study publish automation:
 
 - Workflow: `.github/workflows/case-study-publish.yml`
 - Weekly scheduled refresh plus manual dispatch.
-- Publishes `case-study-publish` artifact with case-study package + index rollup.
+- Publishes `case-study-publish` artifact with case-study packages + index rollup.
+- Supports manual single-input path or multi-input glob publication.

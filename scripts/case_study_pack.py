@@ -123,11 +123,20 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Output directory (default: strategy/private/case-studies/<case_study_id>).",
     )
+    parser.add_argument(
+        "--out-root",
+        type=Path,
+        default=None,
+        help="Output root directory for case-study-id subfolders (e.g., artifacts/case-studies).",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    if args.out_dir is not None and args.out_root is not None:
+        raise CaseStudyError("pass only one of --out-dir or --out-root")
+
     data = load_json(args.input)
 
     case_study_id = get_required_str(data, "case_study_id")
@@ -182,7 +191,12 @@ def main() -> int:
         quote_block = f'> "{quote_text}"\n>\n> - {quote_role}'
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    out_dir = args.out_dir or (Path("strategy/private/case-studies") / case_study_id)
+    if args.out_dir is not None:
+        out_dir = args.out_dir
+    elif args.out_root is not None:
+        out_dir = args.out_root / case_study_id
+    else:
+        out_dir = Path("strategy/private/case-studies") / case_study_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
     metrics_table = "\n".join(

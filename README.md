@@ -147,6 +147,15 @@ python3 scripts/case_study_index.py \
   --json-out reports/CASE_STUDIES_ROLLUP.json
 ```
 
+Or build the case-study rollup from a glob of inputs:
+
+```bash
+python3 scripts/case_study_index.py \
+  --input-glob "strategy/private/case-studies/*.json" \
+  --out reports/CASE_STUDIES_INDEX.md \
+  --json-out reports/CASE_STUDIES_ROLLUP.json
+```
+
 Generate a commercialization review package (dashboard + pipeline health + optional deal pack + optional portal):
 
 ```bash
@@ -208,10 +217,12 @@ Recurring cadence issue creation is automated in:
 Evidence portal publishing automation:
 - `.github/workflows/evidence-portal-publish.yml`
 - Weekly scheduled portal refresh and manual dispatch support.
+- Can attach case-study index/rollup artifacts directly into portal artifact views.
 
 Case-study publishing automation:
 - `.github/workflows/case-study-publish.yml`
 - Weekly scheduled case-study artifact refresh and manual dispatch support.
+- Supports manual single-input path or multi-input glob publication.
 
 ## Security Validation
 

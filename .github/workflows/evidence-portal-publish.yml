@@ -16,6 +16,16 @@ on:
         required: false
         type: boolean
         default: true
+      include_case_study_rollup:
+        description: "Build case-study index/rollup and link it in the portal"
+        required: false
+        type: boolean
+        default: true
+      case_study_input_glob:
+        description: "Glob for case-study input JSON files"
+        required: false
+        type: string
+        default: "strategy/assets/case-studies/*.json"
       copy_artifacts:
         description: "Copy referenced artifacts into portal output"
         required: false
@@ -47,9 +57,24 @@ jobs:
             INPUT_PATH="strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json"
           fi
           echo "PORTAL_INPUT_PATH=$INPUT_PATH" >> "$GITHUB_ENV"
+      - name: Prepare case-study config
+        env:
+          CASE_STUDY_GLOB: ${{ inputs.case_study_input_glob }}
+        run: |
+          if [[ -z "$CASE_STUDY_GLOB" ]]; then
+            CASE_STUDY_GLOB="strategy/assets/case-studies/*.json"
+          fi
+          echo "CASE_STUDY_INPUT_GLOB=$CASE_STUDY_GLOB" >> "$GITHUB_ENV"
       - name: Validate portal input
         run: |
           python3 scripts/validate_strategy_data.py --portal-input "$PORTAL_INPUT_PATH"
+      - name: Build case-study rollup (optional)
+        if: ${{ github.event_name == 'schedule' || inputs.include_case_study_rollup == true || inputs.include_case_study_rollup == 'true' }}
+        run: |
+          python3 scripts/case_study_index.py \
+            --input-glob "$CASE_STUDY_INPUT_GLOB" \
+            --out artifacts/CASE_STUDIES_INDEX.md \
+            --json-out artifacts/CASE_STUDIES_ROLLUP.json
       - name: Build commercial package (optional)
         if: ${{ github.event_name == 'schedule' || inputs.include_commercial_package == true || inputs.include_commercial_package == 'true' }}
         env:
@@ -58,11 +83,18 @@ jobs:
           if [[ -z "$AS_OF_DATE" ]]; then
             AS_OF_DATE="2026-03-01"
           fi
+          shopt -s nullglob
+          case_files=($CASE_STUDY_INPUT_GLOB)
+          extra_case_args=()
+          if [[ ${#case_files[@]} -gt 0 ]]; then
+            extra_case_args+=(--case-study-input "${case_files[0]}")
+          fi
           ./scripts/commercial_review_package.sh \
             --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
             --kpi strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv \
             --deal-input strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json \
             --portal-input "$PORTAL_INPUT_PATH" \
+            "${extra_case_args[@]}" \
             --as-of "$AS_OF_DATE" \
             --out-dir artifacts/commercial-review-package
       - name: Build evidence portal artifact
@@ -79,6 +111,12 @@ jobs:
               args+=(--copy-artifacts)
             fi
           fi
+          if [[ -f artifacts/CASE_STUDIES_INDEX.md ]]; then
+            args+=(--case-studies-index artifacts/CASE_STUDIES_INDEX.md)
+          fi
+          if [[ -f artifacts/CASE_STUDIES_ROLLUP.json ]]; then
+            args+=(--case-studies-rollup artifacts/CASE_STUDIES_ROLLUP.json)
+          fi
           python3 scripts/evidence_portal.py "${args[@]}"
       - name: Evidence portal summary
         run: |
@@ -89,6 +127,12 @@ jobs:
             echo "- \`artifacts/evidence-portal\`"
             echo ""
             tail -n 20 artifacts/evidence-portal/INDEX.md
+            if [[ -f artifacts/CASE_STUDIES_INDEX.md ]]; then
+              echo ""
+              echo "## Case Studies Rollup"
+              echo ""
+              tail -n 20 artifacts/CASE_STUDIES_INDEX.md
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
@@ -96,6 +140,8 @@ jobs:
           name: evidence-portal
           path: |
             artifacts/evidence-portal
+            artifacts/CASE_STUDIES_INDEX.md
+            artifacts/CASE_STUDIES_ROLLUP.json
             artifacts/commercial-review-package
             artifacts/commercial-review-package.tar.gz
           if-no-files-found: warn

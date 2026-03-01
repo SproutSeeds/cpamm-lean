@@ -10,7 +10,12 @@ on:
         description: "Case-study input JSON path"
         required: false
         type: string
-        default: "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json"
+        default: ""
+      case_study_input_glob:
+        description: "Glob for case-study input JSON files"
+        required: false
+        type: string
+        default: "strategy/assets/case-studies/*.json"
       include_commercial_package:
         description: "Build commercial package and include it in publication artifacts"
         required: false
@@ -37,25 +42,79 @@ jobs:
       - name: Prepare case-study input config
         env:
           INPUT_PATH: ${{ inputs.case_study_input_path }}
+          INPUT_GLOB: ${{ inputs.case_study_input_glob }}
         run: |
-          if [[ -z "$INPUT_PATH" ]]; then
-            INPUT_PATH="strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json"
+          if [[ -z "$INPUT_GLOB" ]]; then
+            INPUT_GLOB="strategy/assets/case-studies/*.json"
           fi
           echo "CASE_STUDY_INPUT_PATH=$INPUT_PATH" >> "$GITHUB_ENV"
+          echo "CASE_STUDY_INPUT_GLOB=$INPUT_GLOB" >> "$GITHUB_ENV"
+      - name: Resolve case-study inputs
+        run: |
+          python3 - <<'PY'
+          import glob
+          import os
+          from pathlib import Path
+
+          input_path = os.environ.get("CASE_STUDY_INPUT_PATH", "").strip()
+          input_glob = os.environ.get("CASE_STUDY_INPUT_GLOB", "").strip()
+
+          files = []
+          seen = set()
+          if input_path:
+            p = Path(input_path)
+            key = str(p)
+            if key not in seen:
+              files.append(key)
+              seen.add(key)
+          if input_glob:
+            for match in sorted(glob.glob(input_glob)):
+              key = str(Path(match))
+              if key not in seen:
+                files.append(key)
+                seen.add(key)
+
+          if not files:
+            raise SystemExit("error: no case-study inputs resolved from path/glob")
+
+          Path("artifacts/case-study-inputs.txt").write_text("\n".join(files) + "\n", encoding="utf-8")
+          print(f"resolved case-study inputs: {len(files)}")
+          for item in files:
+            print(f"- {item}")
+          PY
       - name: Validate case-study input
         run: |
-          python3 scripts/validate_strategy_data.py --case-study-input "$CASE_STUDY_INPUT_PATH"
-      - name: Build case-study package
+          while IFS= read -r case_input; do
+            [[ -z "$case_input" ]] && continue
+            python3 scripts/validate_strategy_data.py --case-study-input "$case_input"
+          done < artifacts/case-study-inputs.txt
+      - name: Build case-study packages
         run: |
-          python3 scripts/case_study_pack.py \
-            --input "$CASE_STUDY_INPUT_PATH" \
-            --out-dir artifacts/case-study
+          while IFS= read -r case_input; do
+            [[ -z "$case_input" ]] && continue
+            python3 scripts/case_study_pack.py \
+              --input "$case_input" \
+              --out-root artifacts/case-studies
+          done < artifacts/case-study-inputs.txt
       - name: Build case-study index and rollup
         run: |
-          python3 scripts/case_study_index.py \
-            --inputs "$CASE_STUDY_INPUT_PATH" \
-            --out artifacts/CASE_STUDIES_INDEX.md \
-            --json-out artifacts/CASE_STUDIES_ROLLUP.json
+          python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
+
+          inputs = [line.strip() for line in Path("artifacts/case-study-inputs.txt").read_text().splitlines() if line.strip()]
+          cmd = [
+            "python3",
+            "scripts/case_study_index.py",
+            "--out",
+            "artifacts/CASE_STUDIES_INDEX.md",
+            "--json-out",
+            "artifacts/CASE_STUDIES_ROLLUP.json",
+            "--inputs",
+            *inputs,
+          ]
+          subprocess.run(cmd, check=True)
+          PY
       - name: Build commercial package (optional)
         if: ${{ github.event_name == 'schedule' || inputs.include_commercial_package == true || inputs.include_commercial_package == 'true' }}
         env:
@@ -64,10 +123,15 @@ jobs:
           if [[ -z "$AS_OF_DATE" ]]; then
             AS_OF_DATE="2026-03-01"
           fi
+          CASE_STUDY_PRIMARY_INPUT="$(head -n 1 artifacts/case-study-inputs.txt || true)"
+          extra_case_args=()
+          if [[ -n "$CASE_STUDY_PRIMARY_INPUT" ]]; then
+            extra_case_args+=(--case-study-input "$CASE_STUDY_PRIMARY_INPUT")
+          fi
           ./scripts/commercial_review_package.sh \
             --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
             --kpi strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv \
-            --case-study-input "$CASE_STUDY_INPUT_PATH" \
+            "${extra_case_args[@]}" \
             --as-of "$AS_OF_DATE" \
             --out-dir artifacts/commercial-review-package
       - name: Case-study publish summary
@@ -76,7 +140,7 @@ jobs:
             echo "## Case Study Publish"
             echo ""
             echo "Generated artifacts:"
-            echo "- \`artifacts/case-study\`"
+            echo "- \`artifacts/case-studies\`"
             echo "- \`artifacts/CASE_STUDIES_INDEX.md\`"
             echo "- \`artifacts/CASE_STUDIES_ROLLUP.json\`"
             if [[ -d artifacts/commercial-review-package ]]; then
@@ -84,16 +148,22 @@ jobs:
               echo "- \`artifacts/commercial-review-package.tar.gz\`"
             fi
             echo ""
-            tail -n 30 artifacts/case-study/CASE_STUDY.md
+            first_case="$(find artifacts/case-studies -name CASE_STUDY.md | head -n 1 || true)"
+            if [[ -n "$first_case" ]]; then
+              tail -n 30 "$first_case"
+            else
+              echo "(no CASE_STUDY.md files found)"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: case-study-publish
           path: |
-            artifacts/case-study
+            artifacts/case-studies
             artifacts/CASE_STUDIES_INDEX.md
             artifacts/CASE_STUDIES_ROLLUP.json
+            artifacts/case-study-inputs.txt
             artifacts/commercial-review-package
             artifacts/commercial-review-package.tar.gz
           if-no-files-found: warn

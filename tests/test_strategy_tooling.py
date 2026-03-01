@@ -23,6 +23,8 @@ class StrategyToolingTests(unittest.TestCase):
             portal_out = tmp / "portal"
             commercial_src = tmp / "commercial"
             review_src = tmp / "review"
+            case_index = tmp / "CASE_STUDIES_INDEX.md"
+            case_rollup = tmp / "CASE_STUDIES_ROLLUP.json"
             commercial_src.mkdir(parents=True, exist_ok=True)
             review_src.mkdir(parents=True, exist_ok=True)
 
@@ -32,6 +34,8 @@ class StrategyToolingTests(unittest.TestCase):
             (review_src / "MANIFEST.md").write_text("# Review Package\n", encoding="utf-8")
             (review_src / "SHA256SUMS").write_text("def  report.log\n", encoding="utf-8")
             (review_src / "report.log").write_text("ok\n", encoding="utf-8")
+            case_index.write_text("# Case Studies Index\n", encoding="utf-8")
+            case_rollup.write_text("{\"rollup\": {\"case_study_count\": 1}}\n", encoding="utf-8")
 
             result = run_cmd(
                 [
@@ -45,6 +49,10 @@ class StrategyToolingTests(unittest.TestCase):
                     str(commercial_src),
                     "--review-package-dir",
                     str(review_src),
+                    "--case-studies-index",
+                    str(case_index),
+                    "--case-studies-rollup",
+                    str(case_rollup),
                     "--copy-artifacts",
                 ]
             )
@@ -59,6 +67,8 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertTrue((portal_out / "MANIFEST.json").exists())
             self.assertTrue((portal_out / "artifacts/commercial-package/MANIFEST.md").exists())
             self.assertTrue((portal_out / "artifacts/review-package/MANIFEST.md").exists())
+            self.assertTrue((portal_out / "artifacts/case-studies/CASE_STUDIES_INDEX.md").exists())
+            self.assertTrue((portal_out / "artifacts/case-studies/CASE_STUDIES_ROLLUP.json").exists())
 
             index_text = (portal_out / "INDEX.md").read_text(encoding="utf-8")
             self.assertIn("Engagement ID: example-protocol-a-2026q1", index_text)
@@ -66,6 +76,8 @@ class StrategyToolingTests(unittest.TestCase):
             artifacts_text = (portal_out / "ARTIFACTS.md").read_text(encoding="utf-8")
             self.assertIn("Commercial Package", artifacts_text)
             self.assertIn("Technical Review Package", artifacts_text)
+            self.assertIn("Case Studies Index", artifacts_text)
+            self.assertIn("Case Studies Rollup", artifacts_text)
 
     def test_evidence_portal_rejects_bad_engagement_id(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -328,6 +340,27 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertIn("AMM Launch Readiness", text)
             self.assertIn("Measurable Outcomes", text)
 
+    def test_case_study_pack_generates_under_out_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out_root = Path(tmp_dir) / "case-studies"
+            input_json = ROOT / "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json"
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/case_study_pack.py",
+                    "--input",
+                    str(input_json),
+                    "--out-root",
+                    str(out_root),
+                ]
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            case_dir = out_root / "amm-launch-readiness-2026q1"
+            self.assertTrue((case_dir / "CASE_STUDY.md").exists())
+            self.assertTrue((case_dir / "CASE_STUDY_SUMMARY.json").exists())
+            self.assertTrue((case_dir / "MANIFEST.json").exists())
+
     def test_case_study_pack_rejects_bad_case_study_id(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             bad_input = Path(tmp_dir) / "bad-case-study.json"
@@ -410,6 +443,40 @@ class StrategyToolingTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("metrics missing required fields", result.stdout)
+
+    def test_case_study_index_supports_input_glob(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            work = Path(tmp_dir)
+            input_a = work / "a.json"
+            input_b = work / "b.json"
+            payload = json.loads(
+                (ROOT / "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json").read_text(encoding="utf-8")
+            )
+            input_a.write_text(json.dumps(payload), encoding="utf-8")
+            payload_b = dict(payload)
+            payload_b["case_study_id"] = "amm-launch-readiness-2026q3"
+            payload_b["published_date"] = "2026-05-01"
+            input_b.write_text(json.dumps(payload_b), encoding="utf-8")
+
+            out_md = work / "INDEX.md"
+            out_json = work / "ROLLUP.json"
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/case_study_index.py",
+                    "--input-glob",
+                    str(work / "*.json"),
+                    "--out",
+                    str(out_md),
+                    "--json-out",
+                    str(out_json),
+                ]
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertTrue(out_md.exists())
+            self.assertTrue(out_json.exists())
+            rollup = json.loads(out_json.read_text(encoding="utf-8"))
+            self.assertEqual(rollup["rollup"]["case_study_count"], 2)
 
     def test_deal_pack_generates_expected_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

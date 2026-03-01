@@ -9,11 +9,28 @@ python3 scripts/case_study_pack.py \
   --input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json
 ```
 
+Generate multiple case-study packages into one root:
+
+```bash
+python3 scripts/case_study_pack.py \
+  --input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json \
+  --out-root artifacts/case-studies
+```
+
 Generate a cross-case-study index and rollup:
 
 ```bash
 python3 scripts/case_study_index.py \
   --inputs strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json \
+  --out reports/CASE_STUDIES_INDEX.md \
+  --json-out reports/CASE_STUDIES_ROLLUP.json
+```
+
+Or resolve from glob:
+
+```bash
+python3 scripts/case_study_index.py \
+  --input-glob "strategy/private/case-studies/*.json" \
   --out reports/CASE_STUDIES_INDEX.md \
   --json-out reports/CASE_STUDIES_ROLLUP.json
 ```

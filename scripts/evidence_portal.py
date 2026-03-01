@@ -194,12 +194,42 @@ def summarize_source(name: str, path: Path | None) -> str:
     return "\n".join(lines)
 
 
+def summarize_file_source(name: str, path: Path | None) -> str:
+    if path is None:
+        return f"### {name}\n\n- Not provided.\n"
+    if not path.exists() or not path.is_file():
+        return f"### {name}\n\n- Missing file: `{path}`\n"
+
+    lines: list[str] = []
+    lines.append(f"### {name}")
+    lines.append("")
+    lines.append(f"- Source path: `{path}`")
+    lines.append(f"- Size (bytes): {path.stat().st_size}")
+    lines.append("")
+    if path.suffix.lower() in {".md", ".json"}:
+        snippet = path.read_text(encoding="utf-8").splitlines()[:12]
+        lines.append("Preview:")
+        lines.append("")
+        lines.append("```text")
+        lines.extend(snippet)
+        lines.append("```")
+        lines.append("")
+    return "\n".join(lines)
+
+
 def maybe_copy_source(src: Path | None, dst: Path) -> None:
     if src is None or not src.exists() or not src.is_dir():
         return
     if dst.exists():
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
+
+
+def maybe_copy_file(src: Path | None, dst: Path) -> None:
+    if src is None or not src.exists() or not src.is_file():
+        return
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
 
 
 def parse_args() -> argparse.Namespace:
@@ -222,6 +252,18 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=None,
         help="Optional technical review package directory to reference in portal artifacts page.",
+    )
+    parser.add_argument(
+        "--case-studies-index",
+        type=Path,
+        default=None,
+        help="Optional case-study index markdown file to reference in portal artifacts page.",
+    )
+    parser.add_argument(
+        "--case-studies-rollup",
+        type=Path,
+        default=None,
+        help="Optional case-study rollup JSON file to reference in portal artifacts page.",
     )
     parser.add_argument(
         "--copy-artifacts",
@@ -316,6 +358,8 @@ def main() -> int:
             "",
             summarize_source("Commercial Package", args.commercial_package_dir),
             summarize_source("Technical Review Package", args.review_package_dir),
+            summarize_file_source("Case Studies Index", args.case_studies_index),
+            summarize_file_source("Case Studies Rollup", args.case_studies_rollup),
         ]
     )
 
@@ -361,7 +405,7 @@ The client receives access to the current engagement status and evidence artifac
     for name, text in write_files.items():
         (portal_dir / name).write_text(text, encoding="utf-8")
 
-    copied = {"commercial": None, "review": None}
+    copied = {"commercial": None, "review": None, "case_studies_index": None, "case_studies_rollup": None}
     if args.copy_artifacts:
         artifacts_dir = portal_dir / "artifacts"
         artifacts_dir.mkdir(parents=True, exist_ok=True)
@@ -373,6 +417,16 @@ The client receives access to the current engagement status and evidence artifac
             review_dst = artifacts_dir / "review-package"
             maybe_copy_source(args.review_package_dir, review_dst)
             copied["review"] = str(review_dst)
+        if args.case_studies_index is not None:
+            index_dst = artifacts_dir / "case-studies" / "CASE_STUDIES_INDEX.md"
+            maybe_copy_file(args.case_studies_index, index_dst)
+            if index_dst.exists():
+                copied["case_studies_index"] = str(index_dst)
+        if args.case_studies_rollup is not None:
+            rollup_dst = artifacts_dir / "case-studies" / "CASE_STUDIES_ROLLUP.json"
+            maybe_copy_file(args.case_studies_rollup, rollup_dst)
+            if rollup_dst.exists():
+                copied["case_studies_rollup"] = str(rollup_dst)
 
     manifest = {
         "generated_at_utc": generated_at,
@@ -381,6 +435,8 @@ The client receives access to the current engagement status and evidence artifac
         "portal_dir": str(portal_dir),
         "commercial_package_dir": None if args.commercial_package_dir is None else str(args.commercial_package_dir),
         "review_package_dir": None if args.review_package_dir is None else str(args.review_package_dir),
+        "case_studies_index": None if args.case_studies_index is None else str(args.case_studies_index),
+        "case_studies_rollup": None if args.case_studies_rollup is None else str(args.case_studies_rollup),
         "copy_artifacts": args.copy_artifacts,
         "copied_artifacts": copied,
         "files": sorted(write_files.keys()),
