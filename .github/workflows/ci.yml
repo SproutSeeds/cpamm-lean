@@ -167,6 +167,14 @@ jobs:
         with:
           python-version: "3.11"
       - run: mkdir -p artifacts
+      - name: Validate strategy data templates
+        run: |
+          set -o pipefail
+          python3 scripts/validate_strategy_data.py \
+            --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
+            --kpi strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv \
+            --deal-input strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json \
+            2>&1 | tee artifacts/strategy-data-validation.log
       - name: Strategy tooling tests
         run: |
           set -o pipefail
@@ -182,7 +190,9 @@ jobs:
         if: always()
         with:
           name: strategy-tooling-artifacts
-          path: artifacts/strategy-tooling.log
+          path: |
+            artifacts/strategy-data-validation.log
+            artifacts/strategy-tooling.log
           if-no-files-found: warn
 
   review-package:

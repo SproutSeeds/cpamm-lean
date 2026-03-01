@@ -17,6 +17,81 @@ def run_cmd(args: list[str]) -> subprocess.CompletedProcess[str]:
 
 
 class StrategyToolingTests(unittest.TestCase):
+    def test_validate_strategy_data_passes_templates(self) -> None:
+        result = run_cmd(
+            [
+                PYTHON,
+                "scripts/validate_strategy_data.py",
+                "--pipeline",
+                "strategy/assets/crm/PIPELINE_TEMPLATE.csv",
+                "--kpi",
+                "strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv",
+                "--deal-input",
+                "strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json",
+            ]
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("strategy data validation passed", result.stdout)
+
+    def test_validate_strategy_data_rejects_bad_pipeline_probability(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            bad_pipeline = Path(tmp_dir) / "PIPELINE_BAD.csv"
+            text = (
+                ROOT / "strategy/assets/crm/PIPELINE_TEMPLATE.csv"
+            ).read_text(encoding="utf-8")
+            bad_pipeline.write_text(text.replace(",35,", ",135,", 1), encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/validate_strategy_data.py",
+                    "--pipeline",
+                    str(bad_pipeline),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("probability_pct", result.stdout)
+
+    def test_validate_strategy_data_rejects_bad_kpi_percent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            bad_kpi = Path(tmp_dir) / "KPI_BAD.csv"
+            text = (
+                ROOT / "strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv"
+            ).read_text(encoding="utf-8")
+            bad_kpi.write_text(text.replace(",97,100,", ",101,100,", 1), encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/validate_strategy_data.py",
+                    "--kpi",
+                    str(bad_kpi),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("ci_gate_pass_rate_pct", result.stdout)
+
+    def test_validate_strategy_data_rejects_bad_deal_timeline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            bad_deal = Path(tmp_dir) / "DEAL_BAD.json"
+            payload = json.loads(
+                (ROOT / "strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json").read_text(encoding="utf-8")
+            )
+            payload["proposal"]["kickoff_date"] = "2026-04-10"
+            payload["proposal"]["handoff_date"] = "2026-04-05"
+            bad_deal.write_text(json.dumps(payload), encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/validate_strategy_data.py",
+                    "--deal-input",
+                    str(bad_deal),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("kickoff <= midpoint <= handoff", result.stdout)
+
     def test_deal_pack_generates_expected_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             out_dir = Path(tmp_dir) / "deal-pack"

@@ -92,6 +92,15 @@ python3 scripts/pipeline_health.py \
   --out reports/PIPELINE_HEALTH.md
 ```
 
+Validate commercialization operating data (pipeline/KPI/deal input):
+
+```bash
+python3 scripts/validate_strategy_data.py \
+  --pipeline strategy/private/PIPELINE.csv \
+  --kpi strategy/private/KPI_TRACKER.csv \
+  --deal-input strategy/private/deals/example.json
+```
+
 Generate a commercialization review package (dashboard + pipeline health + optional deal pack):
 
 ```bash

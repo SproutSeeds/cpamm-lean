@@ -62,6 +62,15 @@ python3 scripts/pipeline_health.py \
   --out reports/PIPELINE_HEALTH.md
 ```
 
+Validate operating data before running automation:
+
+```bash
+python3 scripts/validate_strategy_data.py \
+  --pipeline strategy/private/PIPELINE.csv \
+  --kpi strategy/private/KPI_TRACKER.csv \
+  --deal-input strategy/private/deals/example.json
+```
+
 Generate a single commercialization review bundle:
 
 ```bash

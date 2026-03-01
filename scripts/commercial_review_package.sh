@@ -91,6 +91,17 @@ fi
 mkdir -p "$OUT_DIR"
 
 echo "==> output: $OUT_DIR"
+echo "==> validate input data"
+VALIDATE_ARGS=(
+  "--pipeline" "$PIPELINE_PATH"
+  "--kpi" "$KPI_PATH"
+)
+if [[ -n "$DEAL_INPUT_PATH" ]]; then
+  VALIDATE_ARGS+=("--deal-input" "$DEAL_INPUT_PATH")
+fi
+python3 "$ROOT_DIR/scripts/validate_strategy_data.py" "${VALIDATE_ARGS[@]}" \
+  | tee "$OUT_DIR/strategy-data-validation.log"
+
 echo "==> weekly dashboard"
 python3 "$ROOT_DIR/scripts/strategy_dashboard.py" \
   --pipeline "$PIPELINE_PATH" \
@@ -136,10 +147,11 @@ GIT_STATUS="$(git -C "$ROOT_DIR" status --short || true)"
 {
   echo "# Commands executed by scripts/commercial_review_package.sh"
   echo ""
-  echo "1. python3 scripts/strategy_dashboard.py --pipeline <pipeline> --kpi <kpi> --out <out>/WEEKLY_DASHBOARD.md"
-  echo "2. python3 scripts/pipeline_health.py --pipeline <pipeline> --as-of <date> --out <out>/PIPELINE_HEALTH.md"
+  echo "1. python3 scripts/validate_strategy_data.py --pipeline <pipeline> --kpi <kpi> [--deal-input <deal-json>]"
+  echo "2. python3 scripts/strategy_dashboard.py --pipeline <pipeline> --kpi <kpi> --out <out>/WEEKLY_DASHBOARD.md"
+  echo "3. python3 scripts/pipeline_health.py --pipeline <pipeline> --as-of <date> --out <out>/PIPELINE_HEALTH.md"
   if [[ -n "$DEAL_INPUT_PATH" ]]; then
-    echo "3. python3 scripts/deal_pack.py --input <deal-json> --out-dir <out>/deal-pack --include-acceptance-template"
+    echo "4. python3 scripts/deal_pack.py --input <deal-json> --out-dir <out>/deal-pack --include-acceptance-template"
   fi
 } > "$OUT_DIR/COMMANDS.txt"
 
@@ -155,6 +167,7 @@ Branch: $GIT_BRANCH
 - Weekly dashboard: WEEKLY_DASHBOARD.md
 - Pipeline health report: PIPELINE_HEALTH.md
 $(if [[ -n "$DEAL_INPUT_PATH" ]]; then echo "- Deal pack: deal-pack/"; fi)
+- Strategy data validation log: strategy-data-validation.log
 - Toolchain and source metadata: versions.txt
 - Command transcript list: COMMANDS.txt
 - Checksums: SHA256SUMS
@@ -170,6 +183,7 @@ CHECKSUM_FILES=(
   "COMMANDS.txt"
   "MANIFEST.md"
   "PIPELINE_HEALTH.md"
+  "strategy-data-validation.log"
   "WEEKLY_DASHBOARD.md"
   "versions.txt"
 )
