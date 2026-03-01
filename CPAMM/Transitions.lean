@@ -38,6 +38,37 @@ def RemoveLiquidity {α : Type*} [DecidableEq α]
   (∀ a : α, a ≠ addr → s'.balances a = s.balances a) ∧
   s'.f = s.f
 
+/-- Terminal (fully closed) pool state. -/
+def Terminal {α : Type*} (s : CpammState α) : Prop :=
+  s.x = 0 ∧
+  s.y = 0 ∧
+  s.L = 0 ∧
+  (∀ a : α, s.balances a = 0) ∧
+  0 ≤ s.f ∧ s.f < 1
+
+/-- A state is acceptable for transition closure if it is valid or terminal. -/
+def ValidOrTerminal {α : Type*} (s : CpammState α) : Prop :=
+  Valid s ∨ Terminal s
+
+/--
+  Relation describing a full-liquidity withdrawal that closes the pool.
+
+  This models the `dL = s.L` boundary case (entire LP supply burned),
+  with an explicit precondition that `addr` owns all LP shares.
+-/
+def RemoveLiquidityTerminal {α : Type*} [DecidableEq α]
+    (s s' : CpammState α) (addr : α) (dL : ℚ) : Prop :=
+  0 < dL ∧
+  dL = s.L ∧
+  s.balances addr = s.L ∧
+  (∀ a : α, a ≠ addr → s.balances a = 0) ∧
+  s'.x = 0 ∧
+  s'.y = 0 ∧
+  s'.L = 0 ∧
+  s'.balances addr = 0 ∧
+  (∀ a : α, a ≠ addr → s'.balances a = 0) ∧
+  s'.f = s.f
+
 /-- Relation describing a valid swapXforY transition. -/
 def SwapXforY {α : Type*}
     (s s' : CpammState α) (dx : ℚ) : Prop :=

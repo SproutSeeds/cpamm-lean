@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased
+
+### Added
+- Abstract full-withdrawal boundary model in Lean:
+  - `RemoveLiquidityTerminal`
+  - `Terminal`
+  - `ValidOrTerminal`
+- Boundary preservation theorems:
+  - `terminal_preserved_removeLiquidityTerminal`
+  - `validOrTerminal_preserved_removeLiquidityBoundary`
+- Solidity unit test `test_removeLiquidity_fullWithdraw_reverts` to lock current contract behavior (`shares < totalSupply`).
+
+### Changed
+- Verification and audit docs now explicitly distinguish:
+  - Solidity/refinement path (`dL < totalSupply`)
+  - Abstract terminal-close boundary (`dL = L`)
+
 ## v1.4.1 - 2026-03-01
 
 ### Changed

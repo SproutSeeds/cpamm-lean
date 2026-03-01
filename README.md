@@ -63,6 +63,9 @@ CI enforcement now includes:
 - Constant product is preserved at zero fee and nondecreasing with positive fee
 - Output is bounded by reserves
 - Integer floor-division bounds and reserve-positivity rounding safety
+- Full-withdrawal terminal boundary at abstract level:
+  - `terminal_preserved_removeLiquidityTerminal`
+  - `validOrTerminal_preserved_removeLiquidityBoundary`
 - Refinement simulation theorems for:
   - `sim_swapXforY`
   - `sim_swapYforX`
@@ -95,3 +98,4 @@ scripts/repro.sh
 
 This is a minimal verifiable AMM core artifact (no oracle/TWAP/governance/upgrade logic).
 Refinement for swaps and liquidity operations is modeled with integer-floor arithmetic and explicit ±1 bounds against exact rational quantities, documented in [`VERIFICATION.md`](VERIFICATION.md).
+The Solidity contract intentionally enforces `shares < totalSupply` on `removeLiquidity`; the `dL = L` full-withdrawal case is modeled and proved only at the abstract Lean boundary layer.

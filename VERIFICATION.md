@@ -8,6 +8,8 @@
 ### `CPAMM/Invariants.lean`
 - `valid_preserved_addLiquidity`
 - `valid_preserved_removeLiquidity`
+- `terminal_preserved_removeLiquidityTerminal`
+- `validOrTerminal_preserved_removeLiquidityBoundary`
 - `valid_preserved_swapXforY`
 - `valid_preserved_swapYforX`
 - `consistent_preserved_addLiquidity`
@@ -53,6 +55,7 @@ Current scope is **bounded floor simulation** in the Solidity relations:
 
 This means refinement now covers arbitrary integer-rounded swap/add/remove steps with explicit floor-error bounds.
 Additionally, `sim_addLiquidity_bootstrap` explicitly covers the first-liquidity bootstrap path (`totalSupply = reserveX = reserveY = 0`), which is outside `Valid` due strict positive-reserve requirements.
+At the abstract transition layer, a separate terminal-close boundary relation (`RemoveLiquidityTerminal`) and preservation theorem are included for the `dL = L` case.
 
 ## Rounding Bounds
 
@@ -77,7 +80,8 @@ From `CPAMM/Rounding.lean`:
 - Solidity addresses are abstracted as `SolAddress := ℕ`.
 - LP-supply accounting consistency uses finite address universes (`[Fintype α]` and `[DecidableEq α]`).
 - Solidity fee denominator is strictly positive (`h_denom_pos`).
-- Add/remove refinement theorems assume nontrivial liquidity actions (`dL < totalSupply`) to keep post-state reserves positive.
+- Solidity/refinement remove-liquidity theorems assume nontrivial liquidity actions (`dL < totalSupply`) to keep post-state reserves positive (matching contract behavior).
+- The full-withdrawal boundary (`dL = L`) is handled as an abstract terminal-close theorem, not a Solidity-refinement path.
 
 ## Non-goals
 

@@ -45,6 +45,12 @@ contract CPAMMTest is Test {
         assertEq(dy * supplyBefore, yBefore * 250);
     }
 
+    function test_removeLiquidity_fullWithdraw_reverts() public {
+        cpamm.addLiquidity(1000, 1000);
+        vm.expectRevert("must leave liquidity");
+        cpamm.removeLiquidity(1000);
+    }
+
     function test_swap_product_nondecreasing() public {
         cpamm.addLiquidity(1_000_000, 1_000_000);
         uint256 kBefore = cpamm.reserveX() * cpamm.reserveY();

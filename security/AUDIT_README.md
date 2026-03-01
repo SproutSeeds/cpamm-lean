@@ -33,6 +33,7 @@ Security goals:
 - Address abstraction in Lean uses `SolAddress := ℕ`.
 - Fee denominator is strictly positive and numerator is strictly smaller than denominator.
 - Liquidity removal requires `shares < totalSupply` to preserve positive post-state reserves.
+- A separate abstract terminal-close relation is proved for the `dL = L` boundary (`RemoveLiquidityTerminal`), but this path is intentionally excluded from the Solidity contract.
 - The Solidity model assumes checked arithmetic in compiler `0.8.30`.
 - The contract models internal accounting only; no external token hooks are present.
 

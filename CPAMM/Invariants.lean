@@ -82,6 +82,33 @@ theorem valid_preserved_removeLiquidity
   · simpa [hf'] using hf_nonneg
   · simpa [hf'] using hf_lt_one
 
+theorem terminal_preserved_removeLiquidityTerminal
+    {α : Type*} [DecidableEq α] (s s' : CpammState α) (addr : α) (dL : ℚ)
+    (hv : Valid s)
+    (ht : RemoveLiquidityTerminal s s' addr dL) :
+    Terminal s' := by
+  rcases hv with ⟨_, _, _, _, hf_nonneg, hf_lt_one⟩
+  rcases ht with
+    ⟨_, _, _, _, hx', hy', hL', hbal_addr', hbal_other', hf'⟩
+  refine ⟨hx', hy', hL', ?_, ?_, ?_⟩
+  · intro a
+    by_cases ha : a = addr
+    · simpa [ha] using hbal_addr'
+    · exact hbal_other' a ha
+  · simpa [hf'] using hf_nonneg
+  · simpa [hf'] using hf_lt_one
+
+theorem validOrTerminal_preserved_removeLiquidityBoundary
+    {α : Type*} [DecidableEq α] (s s' : CpammState α) (addr : α) (dL : ℚ)
+    (hv : Valid s)
+    (ht : RemoveLiquidity s s' addr dL ∨ RemoveLiquidityTerminal s s' addr dL) :
+    ValidOrTerminal s' := by
+  cases ht with
+  | inl hstrict =>
+      exact Or.inl (valid_preserved_removeLiquidity s s' addr dL hv hstrict)
+  | inr hterminal =>
+      exact Or.inr (terminal_preserved_removeLiquidityTerminal s s' addr dL hv hterminal)
+
 theorem valid_preserved_swapXforY
     {α : Type*} (s s' : CpammState α) (dx : ℚ)
     (hv : Valid s)
