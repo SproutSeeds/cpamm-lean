@@ -156,3 +156,45 @@ jobs:
             artifacts/slither.log
             artifacts/slither.sarif
           if-no-files-found: warn
+
+  review-package:
+    runs-on: ubuntu-latest
+    needs: [lean, solidity, security]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: leanprover/lean-action@c544e89643240c6b398f14a431bcdc6309e36b3e # v1
+      - uses: foundry-rs/foundry-toolchain@8789b3e21e6c11b2697f5eb56eddae542f746c10 # v1
+        with:
+          version: 1.5.1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            .venv-security
+            ~/.cache/pip
+          key: ${{ runner.os }}-slither-0.11.4-${{ hashFiles('scripts/security/slither.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-slither-0.11.4-
+      - name: Build review package
+        run: ./scripts/review_package.sh artifacts/review-package
+      - name: Review package summary
+        run: |
+          {
+            echo "## Review Package"
+            echo ""
+            echo "Generated bundle:"
+            echo "- \`artifacts/review-package\`"
+            echo "- \`artifacts/review-package.tar.gz\`"
+            echo ""
+            tail -n 20 artifacts/review-package/MANIFEST.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: review-package
+          path: |
+            artifacts/review-package
+            artifacts/review-package.tar.gz
+          if-no-files-found: error

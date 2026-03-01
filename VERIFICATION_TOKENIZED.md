@@ -15,6 +15,7 @@ This note defines the formal/spec alignment plan for the ERC20-backed extension
   - Fee-on-transfer rejection path
   - Adversarial token-class rejection paths (false return, no-op transfer, inflationary transfer, external balance drift)
 - Static analysis exists and passes in CI via `scripts/security/slither.sh` (now scanning `solidity/src`).
+- Unified reviewer bundle generation exists via `scripts/review_package.sh` (published by CI as `review-package` artifact).
 - Lean tokenized refinement exists in:
   - `CPAMM/TokenizedRefinement.lean`
   - Reserve-sync invariant (`reserveX = tokenBalX`, `reserveY = tokenBalY`)

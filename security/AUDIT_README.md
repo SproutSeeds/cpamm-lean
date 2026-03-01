@@ -65,6 +65,10 @@ Static analysis (`scripts/security/slither.sh`):
 Token compatibility matrix:
 - `security/TOKEN_COMPATIBILITY.md`
 
+Review package bundle:
+- `scripts/review_package.sh`
+- `reports/REVIEW_PACKAGE.md`
+
 ## Known Reviewer Notes
 
 - `divide-before-multiply` is intentional and aligned with the Lean refinement strategy.
@@ -80,6 +84,7 @@ Token compatibility matrix:
 ~/.elan/bin/lake build
 cd solidity && ~/.foundry/bin/forge test
 ./scripts/security/slither.sh
+./scripts/review_package.sh
 ```
 
 ## Primary References

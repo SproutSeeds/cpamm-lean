@@ -31,18 +31,20 @@ All notable changes to this project are documented in this file.
   - false-return `transfer` on output path
   - external balance drift (rebase-style mismatch)
 - Reviewer-facing token compatibility matrix: `security/TOKEN_COMPATIBILITY.md`.
+- One-command review package generator: `scripts/review_package.sh`.
+- Review package usage guide: `reports/REVIEW_PACKAGE.md`.
 
 ### Changed
 - Verification and audit docs now explicitly distinguish:
   - Solidity/refinement path (`dL < totalSupply`)
   - Abstract terminal-close boundary (`dL = L`)
 - Verification docs now include the tokenized refinement theorem inventory and exact-transfer assumption boundary.
-- Security validation report now records `25/25` passing tests (including tokenized integration coverage).
 - Security validation report now records `30/30` passing tests (including tokenized adversarial matrix coverage).
 - Slither gate scope extended from `solidity/src/CPAMM.sol` to `solidity/src` (core + tokenized extension).
 - CI coverage gate now checks both:
   - `src/CPAMM.sol`
   - `src/CPAMMTokenized.sol`
+- CI now includes a dedicated `review-package` job that publishes a single bundled artifact with manifest, checksums, and reproducibility evidence.
 
 ## v1.4.1 - 2026-03-01
 
