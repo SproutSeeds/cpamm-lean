@@ -24,6 +24,13 @@ All notable changes to this project are documented in this file.
   - reserve/token-balance sync invariant (`ReserveSync`) and per-step preservation theorems
   - projection/simulation into arithmetic `Solidity*` relations
   - trace-level `validAndSync_preserved_tokenizedReachable`
+- Adversarial token behavior test suite: `solidity/test/CPAMM.Tokenized.Adversarial.t.sol` with rejection-path coverage for:
+  - false-return `transferFrom`
+  - no-op `transferFrom`
+  - inflationary transfer behavior
+  - false-return `transfer` on output path
+  - external balance drift (rebase-style mismatch)
+- Reviewer-facing token compatibility matrix: `security/TOKEN_COMPATIBILITY.md`.
 
 ### Changed
 - Verification and audit docs now explicitly distinguish:
@@ -31,6 +38,7 @@ All notable changes to this project are documented in this file.
   - Abstract terminal-close boundary (`dL = L`)
 - Verification docs now include the tokenized refinement theorem inventory and exact-transfer assumption boundary.
 - Security validation report now records `25/25` passing tests (including tokenized integration coverage).
+- Security validation report now records `30/30` passing tests (including tokenized adversarial matrix coverage).
 - Slither gate scope extended from `solidity/src/CPAMM.sol` to `solidity/src` (core + tokenized extension).
 - CI coverage gate now checks both:
   - `src/CPAMM.sol`

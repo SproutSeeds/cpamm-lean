@@ -8,6 +8,7 @@ This validation pass adds:
 - Differential fuzzing between on-chain CPAMM behavior and an independent reference model.
 - Stateful invariant fuzzing via Foundry `StdInvariant` (two LP actors).
 - ERC20-backed integration testing for reserve/token-balance consistency.
+- Adversarial ERC20 token-class testing for explicit rejection behavior.
 - External static analysis using Slither.
 
 ## Differential Fuzzing
@@ -15,6 +16,7 @@ This validation pass adds:
 File:
 - `solidity/test/CPAMM.Differential.t.sol`
 - `solidity/test/CPAMM.Tokenized.t.sol`
+- `solidity/test/CPAMM.Tokenized.Adversarial.t.sol`
 
 Added tests:
 1. `testFuzz_differential_swapXforY_matches_model_and_bound`
@@ -24,6 +26,11 @@ Added tests:
 5. `testFuzz_differential_removeLiquidity_matches_model_and_bound`
 6. `testFuzz_stateful_differential_mixed_operations`
 7. `testFuzz_tokenized_multiStep_reserveSync`
+8. `test_rejectsFalseTransferFromToken`
+9. `test_rejectsNoOpTransferFromToken`
+10. `test_rejectsInflationaryTransferToken`
+11. `test_rejectsFalseTransferOnOutputPath`
+12. `test_revertsOnExternalBalanceDrift`
 
 What is checked:
 - Exact match with an independent integer reference model for swap outputs and post-state reserves.
@@ -34,6 +41,7 @@ What is checked:
 - Mixed-operation stateful consistency (add/remove/swap) against a shadow model over several fuzzed steps.
 - Reserve accounting equality with actual ERC20 balances in an ERC20-backed CPAMM variant.
 - Rejection of fee-on-transfer token inputs for exact-accounting paths.
+- Explicit rejection semantics for non-standard token behavior classes (false return, no-op transferFrom, inflationary transfer, and external reserve drift).
 
 Run:
 
@@ -43,7 +51,10 @@ cd solidity
 ```
 
 Status:
-- Pass (`25/25` tests total across the project, including 4 multi-actor invariant tests and 6 ERC20-backed integration tests).
+- Pass (`30/30` tests total across the project, including 4 multi-actor invariant tests, 6 ERC20-backed integration tests, and 5 adversarial-token tests).
+
+Token-class compatibility policy and test mapping are maintained in:
+- `security/TOKEN_COMPATIBILITY.md`
 
 ## External Tooling: Slither
 

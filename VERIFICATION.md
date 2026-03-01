@@ -94,6 +94,7 @@ From `CPAMM/Rounding.lean`:
 
 - Foundry test suites include baseline unit/fuzz tests plus differential shadow-model fuzzing for swap/add/remove and mixed-operation traces (`solidity/test/CPAMM*.t.sol`).
 - ERC20-backed integration tests (`solidity/test/CPAMM.Tokenized.t.sol`) validate reserve/token-balance consistency for add/remove/swaps and reject fee-on-transfer inputs.
+- Adversarial ERC20 tests (`solidity/test/CPAMM.Tokenized.Adversarial.t.sol`) validate explicit rejection behavior for unsupported token classes.
 - Security static analysis is run via `scripts/security/slither.sh` in fail-on-findings mode over `solidity/src`, with one explicitly triaged exclusion (`divide-before-multiply`).
 - CI (`.github/workflows/ci.yml`) runs three gates on push/PR:
   - Lean build
@@ -101,6 +102,7 @@ From `CPAMM/Rounding.lean`:
   - Slither security gate
 - External-review assumptions and threat-model notes are documented in `security/AUDIT_README.md`.
 - CI also enforces coverage regression protection for `solidity/src/CPAMM.sol` and `solidity/src/CPAMMTokenized.sol` (line and statement coverage must remain `100%`, branch coverage must stay above configured floors) and uploads Slither SARIF to GitHub Security.
+- Token compatibility assumptions and rejection matrix are tracked in `security/TOKEN_COMPATIBILITY.md`.
 
 ## Assumptions
 

@@ -9,9 +9,11 @@ This note defines the formal/spec alignment plan for the ERC20-backed extension
   - `solidity/src/CPAMMTokenized.sol`
 - Tests exist and pass:
   - `solidity/test/CPAMM.Tokenized.t.sol`
+  - `solidity/test/CPAMM.Tokenized.Adversarial.t.sol`
   - Reserve/accounting sync checks: `reserveX == tokenX.balanceOf(this)` and `reserveY == tokenY.balanceOf(this)`
   - Add/remove/swap path coverage, including multi-step fuzz traces
   - Fee-on-transfer rejection path
+  - Adversarial token-class rejection paths (false return, no-op transfer, inflationary transfer, external balance drift)
 - Static analysis exists and passes in CI via `scripts/security/slither.sh` (now scanning `solidity/src`).
 - Lean tokenized refinement exists in:
   - `CPAMM/TokenizedRefinement.lean`
@@ -29,6 +31,7 @@ The machine-checked chain now has two layers:
 Current tokenized assumptions are explicit by construction:
 - exact transfer-in/transfer-out deltas for each step
 - no hidden token-side balance mutation during a modeled transition
+- concrete supported/unsupported token classes are listed in `security/TOKEN_COMPATIBILITY.md`
 
 ## Formalization Targets (Next)
 

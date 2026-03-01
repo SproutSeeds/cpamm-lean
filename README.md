@@ -36,6 +36,7 @@ cd solidity
 Differential coverage includes swap/add/remove checks plus a mixed-operation stateful shadow-model fuzz test.
 The suite also includes a Foundry invariant campaign (`CPAMM.Invariant.t.sol`) with a two-actor stateful handler.
 An ERC20-backed integration suite (`CPAMM.Tokenized.t.sol`) checks reserve/token-balance consistency and fee-on-transfer rejection.
+An adversarial token matrix suite (`CPAMM.Tokenized.Adversarial.t.sol`) verifies explicit rejection behavior for unsupported token classes.
 
 Run Slither static analysis:
 
@@ -44,6 +45,7 @@ Run Slither static analysis:
 ```
 
 See triaged findings in [`security/SECURITY_VALIDATION.md`](security/SECURITY_VALIDATION.md).
+Token support/rejection policy is documented in [`security/TOKEN_COMPATIBILITY.md`](security/TOKEN_COMPATIBILITY.md).
 External reviewer assumptions and scope boundaries are summarized in [`security/AUDIT_README.md`](security/AUDIT_README.md).
 CI runs this gate across `solidity/src` and fails on any non-triaged detector findings.
 

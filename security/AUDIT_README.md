@@ -52,6 +52,7 @@ Foundry tests (`solidity/test/*.t.sol`) cover:
 - Differential shadow-model checks against an independent integer model.
 - Stateful invariant campaign via handler-driven random call sequences.
 - ERC20-backed integration checks (`CPAMM.Tokenized.t.sol`) for reserve/token-balance consistency and fee-on-transfer rejection.
+- Adversarial ERC20 behavior checks (`CPAMM.Tokenized.Adversarial.t.sol`) for explicit rejection semantics.
 
 Note:
 - `CPAMMTokenized.sol` now has a machine-checked tokenized refinement layer for reserve-sync + projection assumptions (`CPAMM/TokenizedRefinement.lean`), while broader non-standard token semantics remain out of formal scope.
@@ -60,6 +61,9 @@ Static analysis (`scripts/security/slither.sh`):
 - Fails CI on non-triaged findings.
 - Scans `solidity/src` (core and tokenized extension contracts).
 - Current explicit exclusion: `divide-before-multiply` (intentional floor-first fee model).
+
+Token compatibility matrix:
+- `security/TOKEN_COMPATIBILITY.md`
 
 ## Known Reviewer Notes
 
