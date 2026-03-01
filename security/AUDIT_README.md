@@ -16,7 +16,7 @@ Out of scope:
 - Governance/admin controls.
 - Upgradeability.
 - Flash-loan-specific mitigations.
-- Token transfer integration (this artifact models arithmetic/state transitions only).
+- Full ERC20 behavioral formalization across non-standard token classes.
 
 ## Threat Model
 
@@ -45,6 +45,7 @@ Machine-checked proofs (`CPAMM/*.lean`) cover:
 - Economic properties for swaps/removals.
 - Floor-rounding bounds.
 - Refinement simulations for `swapXforY`, `swapYforX`, `addLiquidity`, `removeLiquidity`.
+- Tokenized reserve-sync preservation and projection/simulation under exact-transfer assumptions.
 
 Foundry tests (`solidity/test/*.t.sol`) cover:
 - Unit and fuzz checks for contract behavior.
@@ -53,7 +54,7 @@ Foundry tests (`solidity/test/*.t.sol`) cover:
 - ERC20-backed integration checks (`CPAMM.Tokenized.t.sol`) for reserve/token-balance consistency and fee-on-transfer rejection.
 
 Note:
-- `CPAMMTokenized.sol` is currently test-validated only; the Lean refinement proof chain remains scoped to `CPAMM.sol`.
+- `CPAMMTokenized.sol` now has a machine-checked tokenized refinement layer for reserve-sync + projection assumptions (`CPAMM/TokenizedRefinement.lean`), while broader non-standard token semantics remain out of formal scope.
 
 Static analysis (`scripts/security/slither.sh`):
 - Fails CI on non-triaged findings.

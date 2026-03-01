@@ -13,31 +13,40 @@ This note defines the formal/spec alignment plan for the ERC20-backed extension
   - Add/remove/swap path coverage, including multi-step fuzz traces
   - Fee-on-transfer rejection path
 - Static analysis exists and passes in CI via `scripts/security/slither.sh` (now scanning `solidity/src`).
+- Lean tokenized refinement exists in:
+  - `CPAMM/TokenizedRefinement.lean`
+  - Reserve-sync invariant (`reserveX = tokenBalX`, `reserveY = tokenBalY`)
+  - Tokenized step relations for add/remove/swaps with exact transfer-delta assumptions
+  - Projection/simulation theorems from tokenized steps to `Solidity*` relations
+  - Trace-level validity + reserve-sync preservation theorem (`validAndSync_preserved_tokenizedReachable`)
 
 ## Lean Refinement Scope Today
 
-The machine-checked refinement chain in `CPAMM/Refinement.lean` is still scoped to
-the arithmetic-state contract model (`CPAMM.sol`), not the ERC20 transfer semantics.
+The machine-checked chain now has two layers:
+1. `CPAMM/Refinement.lean`: arithmetic Solidity storage (`CPAMM.sol`) to abstract CPAMM transitions.
+2. `CPAMM/TokenizedRefinement.lean`: tokenized storage projection/simulation and reserve-sync preservation.
+
+Current tokenized assumptions are explicit by construction:
+- exact transfer-in/transfer-out deltas for each step
+- no hidden token-side balance mutation during a modeled transition
 
 ## Formalization Targets (Next)
 
-1. **Reserve Sync Invariant**
-- Define and prove that every valid tokenized transition preserves:
-  - `reserveX = onChainBalanceX`
-  - `reserveY = onChainBalanceY`
+1. **Token Behavior Taxonomy in Lean**
+- Partition token classes (standard ERC20 vs non-standard/rebasing/fee-on-transfer) in the formal model.
+- Encode failure boundaries as assumptions/lemmas instead of prose-only scope notes.
 
-2. **Exact Transfer Assumption Surface**
-- Make explicit assumptions for token behavior (standard ERC20 semantics, no hidden mint/burn side effects).
-- Isolate fee-on-transfer rejection as a precondition boundary.
+2. **Adversarial Semantics Layer**
+- Add abstract counterexamples/non-preservation lemmas for unsupported token behaviors to mirror the Solidity adversarial tests.
 
-3. **Tokenized Step Relations**
-- Add abstract relations for tokenized add/remove/swap that include transfer pre/post-state.
-- Prove validity preservation at this extended state layer.
+3. **Tighter Projection Interface**
+- Prove a reusable simulation theorem from tokenized traces directly to `SolidityReachable` traces.
 
-4. **Projection/Simulation**
-- Prove that projecting tokenized states to abstract reserves/supply/balances simulates the existing CPAMM abstract model under the stated token assumptions.
+4. **Proof/Test Coupling**
+- Link each assumption class to concrete Foundry tests in a machine-readable matrix.
 
 ## Reviewer Guidance
 
 - `CPAMM.sol` + existing Lean refinement remains the formally verified artifact.
-- `CPAMMTokenized.sol` is currently a hardened, test-validated extension with explicit scope boundaries documented here.
+- `CPAMMTokenized.sol` is now both hardened/test-validated and partially formalized:
+  reserve-sync and projection are machine-checked under explicit exact-transfer assumptions.

@@ -7,7 +7,7 @@ Formally verified constant-product AMM artifact:
 - Solidity implementation (`solidity/src/CPAMM.sol`)
 - ERC20-backed Solidity extension (`solidity/src/CPAMMTokenized.sol`)
 - Foundry tests (`solidity/test/CPAMM.t.sol`)
-- Refinement layer from Solidity storage relations to Lean transitions
+- Refinement layers from Solidity/tokenized storage relations to Lean transitions
 
 ## Pinned Toolchain
 
@@ -77,6 +77,10 @@ CI enforcement now includes:
   - `sim_addLiquidity`
   - `sim_addLiquidity_bootstrap`
   - `sim_removeLiquidity`
+- Tokenized refinement theorems for:
+  - reserve/token-balance sync preservation per operation
+  - projection from tokenized steps to arithmetic Solidity relations
+  - trace-level validity+sync preservation under exact-transfer assumptions
 - Trace-level Solidity validity preservation for arbitrary finite step sequences
 
 Full theorem inventory and assumptions are in [`VERIFICATION.md`](VERIFICATION.md).
@@ -92,6 +96,7 @@ CPAMM/
   Economics.lean
   Rounding.lean
   Refinement.lean
+  TokenizedRefinement.lean
 solidity/
   src/CPAMM.sol
   src/CPAMMTokenized.sol
@@ -108,4 +113,5 @@ scripts/repro.sh
 This is a minimal verifiable AMM core artifact (no oracle/TWAP/governance/upgrade logic).
 Refinement for swaps and liquidity operations is modeled with integer-floor arithmetic and explicit ±1 bounds against exact rational quantities, documented in [`VERIFICATION.md`](VERIFICATION.md).
 The Solidity contract intentionally enforces `shares < totalSupply` on `removeLiquidity`; the `dL = L` full-withdrawal case is modeled and proved only at the abstract Lean boundary layer.
-`CPAMMTokenized.sol` extends this with real ERC20 transfers and reserve/balance checks; it is currently test-validated (not yet part of the Lean refinement proof chain).
+`CPAMMTokenized.sol` extends this with real ERC20 transfers and reserve/balance checks.
+`CPAMM/TokenizedRefinement.lean` now formalizes reserve/balance sync and projection simulation under explicit exact-transfer assumptions (documented in [`VERIFICATION_TOKENIZED.md`](VERIFICATION_TOKENIZED.md)).

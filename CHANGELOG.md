@@ -19,11 +19,17 @@ All notable changes to this project are documented in this file.
   - fee-on-transfer rejection path
   - multi-step fuzzed sequence with proportional add step generation
 - Tokenized verification-track document: `VERIFICATION_TOKENIZED.md`.
+- Tokenized Lean refinement module: `CPAMM/TokenizedRefinement.lean` with:
+  - tokenized step relations (`TokenizedSwap*`, `TokenizedAddLiquidity`, `TokenizedRemoveLiquidity`)
+  - reserve/token-balance sync invariant (`ReserveSync`) and per-step preservation theorems
+  - projection/simulation into arithmetic `Solidity*` relations
+  - trace-level `validAndSync_preserved_tokenizedReachable`
 
 ### Changed
 - Verification and audit docs now explicitly distinguish:
   - Solidity/refinement path (`dL < totalSupply`)
   - Abstract terminal-close boundary (`dL = L`)
+- Verification docs now include the tokenized refinement theorem inventory and exact-transfer assumption boundary.
 - Security validation report now records `25/25` passing tests (including tokenized integration coverage).
 - Slither gate scope extended from `solidity/src/CPAMM.sol` to `solidity/src` (core + tokenized extension).
 - CI coverage gate now checks both:

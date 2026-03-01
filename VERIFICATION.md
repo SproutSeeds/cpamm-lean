@@ -18,6 +18,7 @@
 ### `CPAMM/Economics.lean`
 - `product_preserved_swap_no_fee`
 - `product_nondecreasing_swap_with_fee`
+- `product_nondecreasing_swapYforX_with_fee`
 - `output_bounded_by_reserve`
 - `remove_liquidity_proportional`
 
@@ -43,6 +44,22 @@
 - `valid_preserved_solidityStep`
 - `valid_preserved_solidityReachable`
 
+### `CPAMM/TokenizedRefinement.lean`
+- `sim_tokenizedSwapXforY`
+- `sim_tokenizedSwapYforX`
+- `sim_tokenizedAddLiquidity`
+- `sim_tokenizedRemoveLiquidity`
+- `reserveSync_preserved_tokenizedSwapXforY`
+- `reserveSync_preserved_tokenizedSwapYforX`
+- `reserveSync_preserved_tokenizedAddLiquidity`
+- `reserveSync_preserved_tokenizedRemoveLiquidity`
+- `valid_preserved_tokenizedSwapXforY`
+- `valid_preserved_tokenizedSwapYforX`
+- `valid_preserved_tokenizedAddLiquidity`
+- `valid_preserved_tokenizedRemoveLiquidity`
+- `validAndSync_preserved_tokenizedStep`
+- `validAndSync_preserved_tokenizedReachable`
+
 ## Refinement Scope
 
 The refinement layer models Solidity storage and transitions in Lean (`SolidityStorage`, `alpha`, and `Solidity*` relations) and proves simulation into the abstract CPAMM relations.
@@ -56,6 +73,15 @@ Current scope is **bounded floor simulation** in the Solidity relations:
 This means refinement now covers arbitrary integer-rounded swap/add/remove steps with explicit floor-error bounds.
 Additionally, `sim_addLiquidity_bootstrap` explicitly covers the first-liquidity bootstrap path (`totalSupply = reserveX = reserveY = 0`), which is outside `Valid` due strict positive-reserve requirements.
 At the abstract transition layer, a separate terminal-close boundary relation (`RemoveLiquidityTerminal`) and preservation theorem are included for the `dL = L` case.
+
+The tokenized refinement layer (`CPAMM/TokenizedRefinement.lean`) extends this with explicit on-chain balance fields and a reserve-sync invariant:
+- `reserveX = tokenBalX`
+- `reserveY = tokenBalY`
+
+Each tokenized step relation encodes exact transfer-delta assumptions directly in its post-state equations and is proved to:
+- preserve reserve-sync
+- project/simulate into the arithmetic Solidity relation (`Solidity*`)
+- preserve abstract `Valid` via the existing Solidity refinement chain
 
 ## Rounding Bounds
 
@@ -83,8 +109,8 @@ From `CPAMM/Rounding.lean`:
 - Solidity fee denominator is strictly positive (`h_denom_pos`).
 - Solidity/refinement remove-liquidity theorems assume nontrivial liquidity actions (`dL < totalSupply`) to keep post-state reserves positive (matching contract behavior).
 - The full-withdrawal boundary (`dL = L`) is handled as an abstract terminal-close theorem, not a Solidity-refinement path.
-- The ERC20-backed extension (`CPAMMTokenized.sol`) is currently outside the Lean refinement theorem set; it is covered by Foundry integration tests.
-- Formal/spec alignment plan for the tokenized extension is tracked in `VERIFICATION_TOKENIZED.md`.
+- Tokenized refinement assumes exact ERC20 transfer semantics for modeled transitions (no hidden mint/burn/rebase side effects during a step and no fee-on-transfer behavior).
+- Tokenized scope and remaining formalization work are tracked in `VERIFICATION_TOKENIZED.md`.
 
 ## Non-goals
 
