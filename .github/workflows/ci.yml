@@ -57,6 +57,13 @@ jobs:
         run: |
           set -o pipefail
           lake build 2>&1 | tee artifacts/lake-build.log
+      - name: Check theorem inventory sync
+        run: |
+          set -o pipefail
+          python3 scripts/theorem_inventory.py \
+            --root . \
+            --verification-md VERIFICATION.md \
+            --check-verification 2>&1 | tee artifacts/theorem-inventory-sync.log
       - name: Validate theorem inventory
         run: |
           set -o pipefail
@@ -74,6 +81,7 @@ jobs:
           name: lean-artifacts
           path: |
             artifacts/lake-*.log
+            artifacts/theorem-inventory-sync.log
             artifacts/theorem-inventory-validation.log
           if-no-files-found: warn
 

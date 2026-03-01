@@ -45,6 +45,18 @@ Validate theorem inventory references in `VERIFICATION.md` against Lean declarat
 python3 scripts/validate_theorem_inventory.py
 ```
 
+Check that the `VERIFICATION.md` theorem section is structurally in sync with generated output:
+
+```bash
+python3 scripts/theorem_inventory.py --check-verification
+```
+
+Auto-rewrite the theorem section from Lean declarations:
+
+```bash
+python3 scripts/theorem_inventory.py --write-verification
+```
+
 Optional listed-only mode (skip completeness check):
 
 ```bash
