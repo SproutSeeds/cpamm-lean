@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## v1.4.1 - 2026-03-01
+
+### Changed
+- CI moved Slither SARIF upload from `github/codeql-action/upload-sarif@v3` to `@v4`.
+- CI workflow actions are now fully pinned to immutable commit SHAs (checkout, upload-artifact, setup-python, cache, foundry-toolchain, codeql upload) for stronger reproducibility and supply-chain hardening.
+
 ## v1.3 - 2026-02-28
 
 ### Added
