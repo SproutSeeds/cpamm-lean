@@ -215,6 +215,21 @@ inductive TokenizedStep : TokenizedStorage → TokenizedStorage → Prop
       (h : TokenizedRemoveLiquidity τ τ' addr shares) :
       TokenizedStep τ τ'
 
+/-- Tokenized one-step simulation into arithmetic Solidity one-step relation. -/
+theorem sim_tokenizedStep_to_solidityStep
+    {τ τ' : TokenizedStorage}
+    (hstep : TokenizedStep τ τ') :
+    SolidityStep τ.core τ'.core := by
+  cases hstep with
+  | swapXforY dx h =>
+      exact SolidityStep.swapXforY dx h.1
+  | swapYforX dy h =>
+      exact SolidityStep.swapYforX dy h.1
+  | addLiquidity addr dx dy h =>
+      exact SolidityStep.addLiquidity addr dx dy h.1
+  | removeLiquidity addr shares h =>
+      exact SolidityStep.removeLiquidity addr shares h.1
+
 /-- Reserve-sync and abstract validity are jointly preserved by one tokenized step. -/
 theorem validAndSync_preserved_tokenizedStep
     {τ τ' : TokenizedStorage}
@@ -243,6 +258,19 @@ inductive TokenizedReachable : TokenizedStorage → TokenizedStorage → Prop
       (h12 : TokenizedStep τ₁ τ₂)
       (h23 : TokenizedReachable τ₂ τ₃) :
       TokenizedReachable τ₁ τ₃
+
+/-- Trace-level simulation from tokenized reachability into Solidity reachability. -/
+theorem sim_tokenizedReachable_to_solidityReachable
+    {τ τ' : TokenizedStorage}
+    (hreach : TokenizedReachable τ τ') :
+    SolidityReachable τ.core τ'.core := by
+  induction hreach with
+  | refl τ0 =>
+      exact SolidityReachable.refl τ0.core
+  | tail h12 h23 ih =>
+      exact SolidityReachable.tail
+        (sim_tokenizedStep_to_solidityStep h12)
+        ih
 
 /-- Validity and reserve-sync are preserved along arbitrary tokenized traces. -/
 theorem validAndSync_preserved_tokenizedReachable

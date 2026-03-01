@@ -21,6 +21,7 @@ This note defines the formal/spec alignment plan for the ERC20-backed extension
   - Reserve-sync invariant (`reserveX = tokenBalX`, `reserveY = tokenBalY`)
   - Tokenized step relations for add/remove/swaps with exact transfer-delta assumptions
   - Projection/simulation theorems from tokenized steps to `Solidity*` relations
+  - Trace-level projection theorem from `TokenizedReachable` to `SolidityReachable`
   - Trace-level validity + reserve-sync preservation theorem (`validAndSync_preserved_tokenizedReachable`)
 - Lean token behavior taxonomy exists in:
   - `CPAMM/TokenizedBehavior.lean`
@@ -39,6 +40,7 @@ Current tokenized assumptions are explicit by construction:
 - no hidden token-side balance mutation during a modeled transition
 - concrete supported/unsupported token classes are listed in `security/TOKEN_COMPATIBILITY.md`
 - assumption/test mapping is tracked in `reports/ASSUMPTION_TEST_MATRIX.md`
+- CI enforces matrix consistency via `scripts/validate_assumption_matrix.py`
 
 ## Formalization Targets (Next)
 

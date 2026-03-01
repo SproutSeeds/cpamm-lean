@@ -36,6 +36,7 @@ All notable changes to this project are documented in this file.
   - external balance drift (rebase-style mismatch)
 - Reviewer-facing token compatibility matrix: `security/TOKEN_COMPATIBILITY.md`.
 - Assumption-to-test coupling matrix: `reports/ASSUMPTION_TEST_MATRIX.md`.
+- Matrix validator script: `scripts/validate_assumption_matrix.py`.
 - One-command review package generator: `scripts/review_package.sh`.
 - Review package usage guide: `reports/REVIEW_PACKAGE.md`.
 
@@ -50,6 +51,7 @@ All notable changes to this project are documented in this file.
   - `src/CPAMM.sol`
   - `src/CPAMMTokenized.sol`
 - CI now includes a dedicated `review-package` job that publishes a single bundled artifact with manifest, checksums, and reproducibility evidence.
+- CI now enforces assumption-matrix correctness by checking each referenced test function exists.
 
 ## v1.4.1 - 2026-03-01
 

@@ -66,6 +66,7 @@ Static analysis (`scripts/security/slither.sh`):
 Token compatibility matrix:
 - `security/TOKEN_COMPATIBILITY.md`
 - `reports/ASSUMPTION_TEST_MATRIX.md`
+- `scripts/validate_assumption_matrix.py` (enforced in CI)
 
 Review package bundle:
 - `scripts/review_package.sh`

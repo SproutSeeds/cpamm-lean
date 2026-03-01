@@ -56,6 +56,7 @@ Status:
 Token-class compatibility policy and test mapping are maintained in:
 - `security/TOKEN_COMPATIBILITY.md`
 - `reports/ASSUMPTION_TEST_MATRIX.md`
+- `scripts/validate_assumption_matrix.py` (CI gate)
 
 ## External Tooling: Slither
 
