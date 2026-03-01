@@ -57,6 +57,7 @@ Note:
 
 Static analysis (`scripts/security/slither.sh`):
 - Fails CI on non-triaged findings.
+- Scans `solidity/src` (core and tokenized extension contracts).
 - Current explicit exclusion: `divide-before-multiply` (intentional floor-first fee model).
 
 ## Known Reviewer Notes

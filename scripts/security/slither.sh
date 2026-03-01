@@ -37,7 +37,7 @@ fi
 
 cd "$ROOT_DIR"
 SLITHER_ARGS=(
-  solidity/src/CPAMM.sol
+  solidity/src
   --exclude "$ACCEPTED_DETECTORS"
   --exclude-dependencies
   --fail-pedantic

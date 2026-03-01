@@ -58,7 +58,7 @@ jobs:
           cd solidity
           forge coverage --report summary --report lcov 2>&1 | tee ../artifacts/forge-coverage.log
           if [[ -f lcov.info ]]; then cp lcov.info ../artifacts/lcov.info; fi
-      - name: Enforce CPAMM coverage threshold
+      - name: Enforce CPAMM contract coverage thresholds
         run: |
           python3 - <<'PY'
           import re
@@ -66,31 +66,34 @@ jobs:
           from pathlib import Path
 
           log = Path("artifacts/forge-coverage.log").read_text()
-          line = next((ln for ln in log.splitlines() if "src/CPAMM.sol" in ln), None)
-          if line is None:
-              print("error: src/CPAMM.sol coverage row not found")
-              sys.exit(1)
+          def parse_row(file_path: str):
+              row = next((ln for ln in log.splitlines() if file_path in ln), None)
+              if row is None:
+                  print(f"error: {file_path} coverage row not found")
+                  sys.exit(1)
+              vals = re.findall(r"([0-9]+(?:\.[0-9]+)?)%", row)
+              if len(vals) < 3:
+                  print(f"error: could not parse coverage percentages from line: {row}")
+                  sys.exit(1)
+              return float(vals[0]), float(vals[1]), float(vals[2])
 
-          vals = re.findall(r"([0-9]+(?:\.[0-9]+)?)%", line)
-          if len(vals) < 3:
-              print(f"error: could not parse coverage percentages from line: {line}")
-              sys.exit(1)
+          targets = [
+              ("src/CPAMM.sol", 56.0),
+              ("src/CPAMMTokenized.sol", 53.0),
+          ]
 
-          line_cov = float(vals[0])
-          stmt_cov = float(vals[1])
-          branch_cov = float(vals[2])
-          min_branch_cov = 56.0
-          if line_cov < 100.0 or stmt_cov < 100.0 or branch_cov < min_branch_cov:
+          for file_path, min_branch_cov in targets:
+              line_cov, stmt_cov, branch_cov = parse_row(file_path)
+              if line_cov < 100.0 or stmt_cov < 100.0 or branch_cov < min_branch_cov:
+                  print(
+                      f"error: coverage regression for {file_path} "
+                      f"(lines={line_cov:.2f}%, statements={stmt_cov:.2f}%, branches={branch_cov:.2f}%)"
+                  )
+                  sys.exit(1)
               print(
-                  f"error: coverage regression for src/CPAMM.sol "
+                  f"coverage gate passed for {file_path} "
                   f"(lines={line_cov:.2f}%, statements={stmt_cov:.2f}%, branches={branch_cov:.2f}%)"
               )
-              sys.exit(1)
-
-          print(
-              f"coverage gate passed for src/CPAMM.sol "
-              f"(lines={line_cov:.2f}%, statements={stmt_cov:.2f}%, branches={branch_cov:.2f}%)"
-          )
           PY
       - name: Solidity summary
         run: |

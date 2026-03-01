@@ -68,13 +68,13 @@ From `CPAMM/Rounding.lean`:
 
 - Foundry test suites include baseline unit/fuzz tests plus differential shadow-model fuzzing for swap/add/remove and mixed-operation traces (`solidity/test/CPAMM*.t.sol`).
 - ERC20-backed integration tests (`solidity/test/CPAMM.Tokenized.t.sol`) validate reserve/token-balance consistency for add/remove/swaps and reject fee-on-transfer inputs.
-- Security static analysis is run via `scripts/security/slither.sh` in fail-on-findings mode, with one explicitly triaged exclusion (`divide-before-multiply`).
+- Security static analysis is run via `scripts/security/slither.sh` in fail-on-findings mode over `solidity/src`, with one explicitly triaged exclusion (`divide-before-multiply`).
 - CI (`.github/workflows/ci.yml`) runs three gates on push/PR:
   - Lean build
   - Solidity tests
   - Slither security gate
 - External-review assumptions and threat-model notes are documented in `security/AUDIT_README.md`.
-- CI also enforces coverage regression protection for `solidity/src/CPAMM.sol` (line and statement coverage must remain `100%`, branch coverage must stay above a configured floor) and uploads Slither SARIF to GitHub Security.
+- CI also enforces coverage regression protection for `solidity/src/CPAMM.sol` and `solidity/src/CPAMMTokenized.sol` (line and statement coverage must remain `100%`, branch coverage must stay above configured floors) and uploads Slither SARIF to GitHub Security.
 
 ## Assumptions
 
@@ -84,6 +84,7 @@ From `CPAMM/Rounding.lean`:
 - Solidity/refinement remove-liquidity theorems assume nontrivial liquidity actions (`dL < totalSupply`) to keep post-state reserves positive (matching contract behavior).
 - The full-withdrawal boundary (`dL = L`) is handled as an abstract terminal-close theorem, not a Solidity-refinement path.
 - The ERC20-backed extension (`CPAMMTokenized.sol`) is currently outside the Lean refinement theorem set; it is covered by Foundry integration tests.
+- Formal/spec alignment plan for the tokenized extension is tracked in `VERIFICATION_TOKENIZED.md`.
 
 ## Non-goals
 

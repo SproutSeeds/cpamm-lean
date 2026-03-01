@@ -3,7 +3,7 @@ pragma solidity 0.8.30;
 
 import {Test} from "forge-std/Test.sol";
 import {CPAMMTokenized} from "../src/CPAMMTokenized.sol";
-import {IERC20} from "forge-std/interfaces/IERC20.sol";
+import {IERC20Minimal} from "../src/interfaces/IERC20Minimal.sol";
 
 contract MockERC20 {
     string public name;
@@ -79,7 +79,7 @@ contract CPAMMTokenizedTest is Test {
     function setUp() public {
         tokenX = new MockERC20("Token X", "X");
         tokenY = new MockERC20("Token Y", "Y");
-        cpamm = new CPAMMTokenized(IERC20(address(tokenX)), IERC20(address(tokenY)), 3, 1000);
+        cpamm = new CPAMMTokenized(IERC20Minimal(address(tokenX)), IERC20Minimal(address(tokenY)), 3, 1000);
 
         tokenX.mint(address(this), 10**24);
         tokenY.mint(address(this), 10**24);
@@ -144,7 +144,8 @@ contract CPAMMTokenizedTest is Test {
     function test_feeOnTransferToken_rejected() public {
         FeeOnTransferMockERC20 feeX = new FeeOnTransferMockERC20("Fee X", "fX", 100);
         MockERC20 plainY = new MockERC20("Plain Y", "pY");
-        CPAMMTokenized badPool = new CPAMMTokenized(IERC20(address(feeX)), IERC20(address(plainY)), 3, 1000);
+        CPAMMTokenized badPool =
+            new CPAMMTokenized(IERC20Minimal(address(feeX)), IERC20Minimal(address(plainY)), 3, 1000);
 
         feeX.mint(address(this), 1_000_000);
         plainY.mint(address(this), 1_000_000);

@@ -45,7 +45,7 @@ Run Slither static analysis:
 
 See triaged findings in [`security/SECURITY_VALIDATION.md`](security/SECURITY_VALIDATION.md).
 External reviewer assumptions and scope boundaries are summarized in [`security/AUDIT_README.md`](security/AUDIT_README.md).
-CI runs this gate and fails on any non-triaged detector findings.
+CI runs this gate across `solidity/src` and fails on any non-triaged detector findings.
 
 Each CI run also publishes artifacts for review:
 - Lean cache/build logs
@@ -54,7 +54,10 @@ Each CI run also publishes artifacts for review:
 
 CI enforcement now includes:
 - pinned Lean action SHA (`leanprover/lean-action@c544e896...`)
-- coverage threshold gate for `src/CPAMM.sol` (lines/statements must remain `100%`; branch coverage has a floor gate)
+- coverage threshold gates for:
+  - `src/CPAMM.sol`
+  - `src/CPAMMTokenized.sol`
+  (lines/statements must remain `100%`; branch coverage has floor gates)
 - SARIF upload to GitHub Security for Slither findings
 - cached/retried Slither toolchain setup in CI for stability
 
@@ -77,6 +80,7 @@ CI enforcement now includes:
 - Trace-level Solidity validity preservation for arbitrary finite step sequences
 
 Full theorem inventory and assumptions are in [`VERIFICATION.md`](VERIFICATION.md).
+Tokenized extension scope and the formalization roadmap are in [`VERIFICATION_TOKENIZED.md`](VERIFICATION_TOKENIZED.md).
 
 ## Repository Layout
 
@@ -95,6 +99,7 @@ solidity/
   test/CPAMM.Tokenized.t.sol
 .github/workflows/ci.yml
 VERIFICATION.md
+VERIFICATION_TOKENIZED.md
 scripts/repro.sh
 ```
 

@@ -18,12 +18,17 @@ All notable changes to this project are documented in this file.
   - reserve/token-balance sync checks across add/remove/swaps
   - fee-on-transfer rejection path
   - multi-step fuzzed sequence with proportional add step generation
+- Tokenized verification-track document: `VERIFICATION_TOKENIZED.md`.
 
 ### Changed
 - Verification and audit docs now explicitly distinguish:
   - Solidity/refinement path (`dL < totalSupply`)
   - Abstract terminal-close boundary (`dL = L`)
 - Security validation report now records `25/25` passing tests (including tokenized integration coverage).
+- Slither gate scope extended from `solidity/src/CPAMM.sol` to `solidity/src` (core + tokenized extension).
+- CI coverage gate now checks both:
+  - `src/CPAMM.sol`
+  - `src/CPAMMTokenized.sol`
 
 ## v1.4.1 - 2026-03-01
 
