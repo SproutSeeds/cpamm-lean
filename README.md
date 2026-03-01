@@ -62,6 +62,8 @@ Rehearse strict-gate intake against live RigidityCore target models (Aave/Balanc
 ./scripts/protocol_readiness_rehearsal.sh /Users/codymitchell/Documents/code/RigidityCore
 ```
 
+If a target already has `targets/<target>/<session>/HANDOFF_READY.json`, the rehearsal validates that real payload directly; otherwise it generates a rehearsal payload.
+
 ## Commercial Ops (Private Inputs)
 
 This repo keeps technical verification work public and keeps commercial operating playbooks private by default.

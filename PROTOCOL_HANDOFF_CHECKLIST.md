@@ -57,3 +57,5 @@ Run a strict-gate readiness rehearsal against live RigidityCore target models (A
 ```bash
 ./scripts/protocol_readiness_rehearsal.sh /Users/codymitchell/Documents/code/RigidityCore
 ```
+
+The rehearsal uses real `targets/*/HANDOFF_READY.json` payloads when available, and otherwise generates rehearsal payloads for intake validation.

@@ -33,9 +33,11 @@ OVERALL_STATUS=0
 for target in "${TARGETS[@]}"; do
   target_slug="${target//\//_}"
   system_json="$RIGIDITYCORE_ROOT/targets/$target/System.json"
+  real_handoff_json="$RIGIDITYCORE_ROOT/targets/$target/HANDOFF_READY.json"
   handoff_json="$OUT_DIR/${target_slug}.HANDOFF_READY.json"
   intake_md="$OUT_DIR/${target_slug}.protocol-intake.md"
   intake_log="$OUT_DIR/${target_slug}.protocol-intake.log"
+  handoff_source="generated"
 
   if [[ ! -f "$system_json" ]]; then
     SUMMARY_ROWS+=("| \`$target\` | SKIP | \`$system_json\` missing |")
@@ -52,7 +54,11 @@ print(payload.get("system_id", "unknown_system"))
 PY
 )"
 
-  python3 - "$handoff_json" "$system_id" "$target_slug" <<'PY'
+  if [[ -f "$real_handoff_json" ]]; then
+    cp "$real_handoff_json" "$handoff_json"
+    handoff_source="real"
+  else
+    python3 - "$handoff_json" "$system_id" "$target_slug" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -90,6 +96,7 @@ payload = {
 
 out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 PY
+  fi
 
   set +e
   python3 "$ROOT_DIR/scripts/intake_validate.py" \
@@ -101,10 +108,10 @@ PY
   set -e
 
   if [[ $rc -eq 0 ]]; then
-    SUMMARY_ROWS+=("| \`$target\` | PASS | \`$intake_md\` |")
+    SUMMARY_ROWS+=("| \`$target\` | PASS | \`$handoff_source\` | \`$intake_md\` |")
   else
     OVERALL_STATUS=1
-    SUMMARY_ROWS+=("| \`$target\` | FAIL | \`$intake_log\` |")
+    SUMMARY_ROWS+=("| \`$target\` | FAIL | \`$handoff_source\` | \`$intake_log\` |")
   fi
 done
 
@@ -119,15 +126,15 @@ packet="$OUT_DIR/READY_TO_PROVE_PACKET.md"
   echo
   echo "## Results"
   echo
-  echo "| Target | Status | Evidence |"
-  echo "|---|---|---|"
+  echo "| Target | Status | Handoff Source | Evidence |"
+  echo "|---|---|---|---|"
   for row in "${SUMMARY_ROWS[@]}"; do
     echo "$row"
   done
   echo
   echo "## Generated Files"
   echo
-  echo "- \`*.HANDOFF_READY.json\` (rehearsal handoff payloads)"
+  echo "- \`*.HANDOFF_READY.json\` (real copied payloads when available, otherwise generated rehearsal payloads)"
   echo "- \`*.protocol-intake.md\` (validator reports)"
   echo "- \`*.protocol-intake.log\` (validator logs)"
   echo

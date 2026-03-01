@@ -36,6 +36,16 @@ def ExactPullDelta (before after amount : ℕ) : Prop :=
 def ExactPushDelta (before after amount : ℕ) : Prop :=
   before = after + amount
 
+/-- First-class relation for recipient-observed output transfer exactness. -/
+def RecipientObservedOutputExact (recipientBefore recipientAfter quotedOut : ℕ) : Prop :=
+  recipientAfter = recipientBefore + quotedOut
+
+theorem recipientObservedOutputExact_iff_exactPullDelta
+    (recipientBefore recipientAfter quotedOut : ℕ) :
+    RecipientObservedOutputExact recipientBefore recipientAfter quotedOut
+      ↔ ExactPullDelta recipientBefore recipientAfter quotedOut := by
+  rfl
+
 /-- Deflationary/fee-on-transfer pull behavior. -/
 def FeeOnTransferPull (before after amount fee : ℕ) : Prop :=
   amount > 0 ∧
@@ -144,6 +154,14 @@ theorem recipientFeePush_receiver_not_exact
   calc
     recipientBefore + (amount - fee) = recipientAfter := hrecipient_after.symm
     _ = recipientBefore + amount := hexact
+
+/-- Recipient-fee output implies recipient-observed output relation is not exact. -/
+theorem recipientFeePush_receiverOutput_not_exact
+    {poolBefore poolAfter recipientBefore recipientAfter amount fee : ℕ}
+    (h : RecipientFeePush poolBefore poolAfter recipientBefore recipientAfter amount fee) :
+    ¬ RecipientObservedOutputExact recipientBefore recipientAfter amount := by
+  simpa [RecipientObservedOutputExact, ExactPullDelta] using
+    (recipientFeePush_receiver_not_exact (h := h))
 
 /-- Tokenized add-liquidity enforces an exact pull delta on token X. -/
 theorem exactPullDelta_of_tokenizedAddLiquidityX
@@ -287,6 +305,27 @@ theorem reserveSync_and_outputDivergence_by_recipientFeePushY
   refine ⟨?_, ?_⟩
   · exact reserveSync_preserved_by_recipientFeePushY hsync hresX hresY hbalX hpush
   · exact recipientFeePush_receiver_not_exact hpush
+
+/--
+  Remove-liquidity output path can preserve reserve-sync while recipient-observed
+  token-X output diverges under recipient-fee output semantics.
+-/
+theorem reserveSync_and_removeLiquidityOutputDivergence_by_recipientFeePushX
+    {τ τ' : TokenizedStorage}
+    {addr : SolAddress} {shares recipientBefore recipientAfter fee : ℕ}
+    (hsync : ReserveSync τ)
+    (hstep : TokenizedRemoveLiquidity τ τ' addr shares)
+    (hpush :
+      RecipientFeePush
+        τ.tokenBalX τ'.tokenBalX
+        recipientBefore recipientAfter
+        (removeX τ.core shares) fee) :
+    ReserveSync τ' ∧
+      ¬ RecipientObservedOutputExact
+        recipientBefore recipientAfter (removeX τ.core shares) := by
+  refine ⟨?_, ?_⟩
+  · exact reserveSync_preserved_tokenizedRemoveLiquidity τ τ' addr shares hsync hstep
+  · exact recipientFeePush_receiverOutput_not_exact hpush
 
 theorem externalBalanceDrift_not_exactSync
     {before after drift : ℕ}

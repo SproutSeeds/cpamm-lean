@@ -16,6 +16,7 @@ All notable changes to this project are documented in this file.
 - Updated docs (`README.md`, `VERIFICATION.md`) with intake-gate commands and references.
 - Added `scripts/protocol_readiness_rehearsal.sh` to run strict-gate intake rehearsal against live RigidityCore target models and emit ready-to-prove packets.
 - Added readiness rehearsal report: `reports/PROTOCOL_READINESS_REHEARSAL.md`.
+- Updated `scripts/protocol_readiness_rehearsal.sh` to use real RigidityCore `targets/*/HANDOFF_READY.json` payloads when present (fallback to generated rehearsal payloads otherwise).
 - Added `PROTOCOL_TEMPLATE.md` defining the RigidityCore-to-cpamm-lean handoff contract:
   - pipeline ownership split
   - `System.json` schema-to-Lean mapping table grounded in `spec/SPEC.md`
@@ -51,13 +52,18 @@ All notable changes to this project are documented in this file.
 - Updated tokenized verification docs (`VERIFICATION_TOKENIZED.md`, `VERIFICATION.md`) to reflect implemented trace-level projection, strengthened behavior lemmas, and matrix validation scope.
 - Extended `CPAMM/TokenizedBehavior.lean` with output-path recipient-fee semantics:
   - `RecipientFeePush`
+  - `RecipientObservedOutputExact`
+  - `recipientObservedOutputExact_iff_exactPullDelta`
   - `recipientFeePush_exactPushDelta`
   - `recipientFeePush_receiver_not_exact`
+  - `recipientFeePush_receiverOutput_not_exact`
   - `reserveSync_preserved_by_recipientFeePushY`
   - `reserveSync_and_outputDivergence_by_recipientFeePushY`
+  - `reserveSync_and_removeLiquidityOutputDivergence_by_recipientFeePushX`
 - Extended `solidity/test/CPAMM.Tokenized.Adversarial.t.sol` with output-path divergence tests:
   - `test_outputFeeOnPoolTransfer_breaksObservedSwapXforYOutput`
   - `test_outputFeeOnPoolTransfer_breaksObservedSwapYforXOutput`
+  - `test_outputFeeOnPoolTransfer_breaksObservedRemoveLiquidityOutput`
 - Updated token compatibility and assumption matrix docs to include output-path divergence behavior and theorem/test links.
 - Refactored `CPAMM/TokenizedRefinement.lean` with reusable step-level preservation theorems:
   - `valid_preserved_tokenizedStep`

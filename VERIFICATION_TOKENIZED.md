@@ -27,7 +27,8 @@ This note defines the formal/spec alignment plan for the ERC20-backed extension
   - `CPAMM/TokenizedBehavior.lean`
   - formal token-class partition (`TokenClass`, `SupportedTokenClass`)
   - adversarial non-exact lemmas (`feeOnTransferPull_not_exact`, `inflationaryPull_not_exact`, `noOpPull_not_exact`)
-  - output-path recipient-fee lemmas (`recipientFeePush_exactPushDelta`, `recipientFeePush_receiver_not_exact`)
+  - first-class recipient-observed output relation (`RecipientObservedOutputExact`)
+  - output-path recipient-fee lemmas (`recipientFeePush_exactPushDelta`, `recipientFeePush_receiverOutput_not_exact`)
   - explicit reserve-sync break witness (`exists_reserveSync_break_by_externalDrift`)
 
 ## Lean Refinement Scope Today
@@ -62,7 +63,8 @@ Implemented:
 - It now includes output-path divergence lemmas for recipient-fee token behavior:
   - `reserveSync_preserved_by_recipientFeePushY`
   - `reserveSync_and_outputDivergence_by_recipientFeePushY`
-  - matched by adversarial Solidity tests where returned quote differs from recipient-observed transfer while reserve-sync holds.
+  - `reserveSync_and_removeLiquidityOutputDivergence_by_recipientFeePushX`
+  - matched by adversarial Solidity tests where returned quote differs from recipient-observed transfer while reserve-sync holds (swap and remove paths).
 
 3. **Proof/Test Coupling Automation**
 - CI validation in `scripts/validate_assumption_matrix.py` now checks:
@@ -77,11 +79,11 @@ Implemented:
 
 ## Remaining Priority Work
 
-1. **Output-Path Coverage Beyond Swap**
-- Extend recipient-observed output divergence theorem/test pairs to the remove-liquidity output path (`_pushExact` transfer semantics).
+1. **Remove-Path Symmetry Completion**
+- Add symmetric token-Y remove-liquidity output divergence theorem/test pair (current remove-path divergence pair is token-X focused).
 
-2. **Token Semantics Interface Tightening**
-- Introduce a first-class recipient-observed transfer semantics relation in Lean and connect it to explicit test obligations in the assumption matrix.
+2. **Recipient-Semantics Refinement Integration**
+- Lift `RecipientObservedOutputExact` from behavior-level lemmas into a dedicated refinement-facing IO semantics layer for future protocol templates.
 
 ## Reviewer Guidance
 

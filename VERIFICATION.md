@@ -69,8 +69,10 @@
 - `feeOnTransferPull_not_exact`
 - `inflationaryPull_not_exact`
 - `noOpPull_not_exact`
+- `recipientObservedOutputExact_iff_exactPullDelta`
 - `recipientFeePush_exactPushDelta`
 - `recipientFeePush_receiver_not_exact`
+- `recipientFeePush_receiverOutput_not_exact`
 - `exactPullDelta_of_tokenizedAddLiquidityX`
 - `exactPullDelta_of_tokenizedAddLiquidityY`
 - `exactPullDelta_of_tokenizedSwapXforY`
@@ -88,6 +90,7 @@
 - `reserveSync_not_preserved_by_externalDriftY`
 - `reserveSync_preserved_by_recipientFeePushY`
 - `reserveSync_and_outputDivergence_by_recipientFeePushY`
+- `reserveSync_and_removeLiquidityOutputDivergence_by_recipientFeePushX`
 - `exists_reserveSync_break_by_externalDrift`
 
 ## Refinement Scope
@@ -151,7 +154,7 @@ From `CPAMM/Rounding.lean`:
 
 - Foundry test suites include baseline unit/fuzz tests plus differential shadow-model fuzzing for swap/add/remove and mixed-operation traces (`solidity/test/CPAMM*.t.sol`).
 - ERC20-backed integration tests (`solidity/test/CPAMM.Tokenized.t.sol`) validate reserve/token-balance consistency for add/remove/swaps and reject fee-on-transfer inputs.
-- Adversarial ERC20 tests (`solidity/test/CPAMM.Tokenized.Adversarial.t.sol`) validate explicit rejection behavior for unsupported token classes and also demonstrate output-path recipient-fee semantics where reserve-sync can still hold while user-observed output diverges.
+- Adversarial ERC20 tests (`solidity/test/CPAMM.Tokenized.Adversarial.t.sol`) validate explicit rejection behavior for unsupported token classes and also demonstrate output-path recipient-fee semantics (swap and remove paths) where reserve-sync can still hold while user-observed output diverges.
 - Security static analysis is run via `scripts/security/slither.sh` in fail-on-findings mode over `solidity/src`, with one explicitly triaged exclusion (`divide-before-multiply`).
 - CI (`.github/workflows/ci.yml`) runs three gates on push/PR:
   - Lean build

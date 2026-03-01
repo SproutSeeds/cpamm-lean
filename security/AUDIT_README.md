@@ -74,7 +74,7 @@ Foundry tests (`solidity/test/*.t.sol`) cover:
 - Differential shadow-model checks against an independent integer model.
 - Stateful invariant campaign via handler-driven random call sequences.
 - ERC20-backed integration checks (`CPAMM.Tokenized.t.sol`) for reserve/token-balance consistency and fee-on-transfer rejection.
-- Adversarial ERC20 behavior checks (`CPAMM.Tokenized.Adversarial.t.sol`) for explicit rejection semantics and output-path divergence scenarios.
+- Adversarial ERC20 behavior checks (`CPAMM.Tokenized.Adversarial.t.sol`) for explicit rejection semantics and output-path divergence scenarios (swap and remove paths).
 
 Note:
 - `CPAMMTokenized.sol` now has a machine-checked tokenized refinement layer for reserve-sync + projection assumptions (`CPAMM/TokenizedRefinement.lean`).

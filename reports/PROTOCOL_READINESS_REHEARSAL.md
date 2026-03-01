@@ -4,7 +4,7 @@ This report documents a strict-gate intake rehearsal from cpamm-lean against liv
 
 ## Run Metadata
 
-- run_utc: `2026-03-01T22:48:28Z`
+- run_utc: `2026-03-01T22:59:55Z`
 - command:
 
 ```bash
@@ -15,10 +15,10 @@ This report documents a strict-gate intake rehearsal from cpamm-lean against liv
 
 ## Targets Rehearsed
 
-| Target | System Payload | Strict Gate | Result |
-|---|---|---|---|
-| `aave/session1` | `RigidityCore/targets/aave/session1/System.json` | `true` | PASS |
-| `balancer/session1` | `RigidityCore/targets/balancer/session1/System.json` | `true` | PASS |
+| Target | System Payload | Handoff Source | Strict Gate | Result |
+|---|---|---|---|---|
+| `aave/session1` | `RigidityCore/targets/aave/session1/System.json` | generated (`HANDOFF_READY.json` not present in target dir) | `true` | PASS |
+| `balancer/session1` | `RigidityCore/targets/balancer/session1/System.json` | generated (`HANDOFF_READY.json` not present in target dir) | `true` | PASS |
 
 ## Generated Packet
 
@@ -31,3 +31,4 @@ This report documents a strict-gate intake rehearsal from cpamm-lean against liv
 ## Interpretation
 
 The cpamm-lean intake gate can consume real RigidityCore protocol models and validate strict-gate handoff structure end-to-end before Lean engagement work begins.
+When a target lane includes a real `HANDOFF_READY.json`, the rehearsal now copies and validates that payload directly; otherwise it generates a rehearsal payload.

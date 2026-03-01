@@ -58,6 +58,7 @@ This matrix documents the ERC20 behavior classes exercised by the tokenized inte
 - Evidence:
   - `solidity/test/CPAMM.Tokenized.Adversarial.t.sol::test_outputFeeOnPoolTransfer_breaksObservedSwapXforYOutput`
   - `solidity/test/CPAMM.Tokenized.Adversarial.t.sol::test_outputFeeOnPoolTransfer_breaksObservedSwapYforXOutput`
+  - `solidity/test/CPAMM.Tokenized.Adversarial.t.sol::test_outputFeeOnPoolTransfer_breaksObservedRemoveLiquidityOutput`
 
 ## Interpretation
 

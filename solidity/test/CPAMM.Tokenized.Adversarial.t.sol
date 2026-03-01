@@ -230,4 +230,26 @@ contract CPAMMTokenizedAdversarialTest is Test {
         assertLt(observedOut, quotedOut, "recipient output must diverge");
         assertEq(quotedOut - observedOut, (quotedOut * OUTPUT_FEE_BPS) / 10_000, "unexpected output fee");
     }
+
+    function test_outputFeeOnPoolTransfer_breaksObservedRemoveLiquidityOutput() public {
+        PoolOutputFeeERC20 tokenX = new PoolOutputFeeERC20("Output Fee X", "ofX", OUTPUT_FEE_BPS);
+        AdvMockERC20 tokenY = new AdvMockERC20("Token Y", "Y");
+        CPAMMTokenized cpamm = _deploy(tokenX, tokenY);
+        tokenX.setPool(address(cpamm));
+
+        uint256 minted = cpamm.addLiquidity(BASE, BASE);
+        uint256 shares = minted / 2;
+
+        uint256 xBefore = tokenX.balanceOf(address(this));
+        uint256 yBefore = tokenY.balanceOf(address(this));
+        (uint256 quotedDx, uint256 quotedDy) = cpamm.removeLiquidity(shares);
+        uint256 observedDx = tokenX.balanceOf(address(this)) - xBefore;
+        uint256 observedDy = tokenY.balanceOf(address(this)) - yBefore;
+
+        assertEq(cpamm.reserveX(), tokenX.balanceOf(address(cpamm)), "reserveX sync");
+        assertEq(cpamm.reserveY(), tokenY.balanceOf(address(cpamm)), "reserveY sync");
+        assertLt(observedDx, quotedDx, "recipient X output must diverge");
+        assertEq(observedDy, quotedDy, "recipient Y output should remain exact");
+        assertEq(quotedDx - observedDx, (quotedDx * OUTPUT_FEE_BPS) / 10_000, "unexpected output fee");
+    }
 }
