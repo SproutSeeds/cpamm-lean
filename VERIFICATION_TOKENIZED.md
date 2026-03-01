@@ -27,9 +27,13 @@ This note defines the formal/spec alignment plan for the ERC20-backed extension
   - `CPAMM/TokenizedBehavior.lean`
   - formal token-class partition (`TokenClass`, `SupportedTokenClass`)
   - adversarial non-exact lemmas (`feeOnTransferPull_not_exact`, `inflationaryPull_not_exact`, `noOpPull_not_exact`)
-  - first-class recipient-observed output relation (`RecipientObservedOutputExact`)
   - output-path recipient-fee lemmas (`recipientFeePush_exactPushDelta`, `recipientFeePush_receiverOutput_not_exact`)
   - explicit reserve-sync break witness (`exists_reserveSync_break_by_externalDrift`)
+- Lean tokenized IO semantics layer exists in:
+  - `CPAMM/TokenizedIOSemantics.lean`
+  - transfer exactness relations (`ExactPullDelta`, `ExactPushDelta`)
+  - recipient-observed output exactness (`RecipientObservedOutputExact`)
+  - extraction lemmas from tokenized steps (`exactPullDelta_of_tokenized*`)
 
 ## Lean Refinement Scope Today
 
@@ -64,6 +68,7 @@ Implemented:
   - `reserveSync_preserved_by_recipientFeePushY`
   - `reserveSync_and_outputDivergence_by_recipientFeePushY`
   - `reserveSync_and_removeLiquidityOutputDivergence_by_recipientFeePushX`
+  - `reserveSync_and_removeLiquidityOutputDivergence_by_recipientFeePushY`
   - matched by adversarial Solidity tests where returned quote differs from recipient-observed transfer while reserve-sync holds (swap and remove paths).
 
 3. **Proof/Test Coupling Automation**
@@ -77,13 +82,14 @@ Implemented:
   - `reserveSync_preserved_tokenizedStep`
 - This factors repeated case analysis out of `validAndSync_preserved_tokenizedStep` and provides reusable scaffolding for future tokenized modules.
 
+5. **Recipient-Semantics Refinement Integration**
+- Moved recipient/output exactness and transfer-delta relations into dedicated module:
+  - `CPAMM/TokenizedIOSemantics.lean`
+- `CPAMM/TokenizedBehavior.lean` now imports this IO layer and focuses on token-class/adversarial behavior proofs.
+
 ## Remaining Priority Work
 
-1. **Remove-Path Symmetry Completion**
-- Add symmetric token-Y remove-liquidity output divergence theorem/test pair (current remove-path divergence pair is token-X focused).
-
-2. **Recipient-Semantics Refinement Integration**
-- Lift `RecipientObservedOutputExact` from behavior-level lemmas into a dedicated refinement-facing IO semantics layer for future protocol templates.
+- No known blocking tokenized formalization gaps for the current CPAMM tokenized scope.
 
 ## Reviewer Guidance
 

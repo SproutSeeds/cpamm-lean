@@ -64,19 +64,21 @@
 - `validAndSync_preserved_tokenizedStep`
 - `validAndSync_preserved_tokenizedReachable`
 
+### `CPAMM/TokenizedIOSemantics.lean`
+- `recipientObservedOutputExact_iff_exactPullDelta`
+- `exactPullDelta_of_tokenizedAddLiquidityX`
+- `exactPullDelta_of_tokenizedAddLiquidityY`
+- `exactPullDelta_of_tokenizedSwapXforY`
+- `exactPullDelta_of_tokenizedSwapYforX`
+
 ### `CPAMM/TokenizedBehavior.lean`
 - `supportedTokenClass_iff_standardExact`
 - `feeOnTransferPull_not_exact`
 - `inflationaryPull_not_exact`
 - `noOpPull_not_exact`
-- `recipientObservedOutputExact_iff_exactPullDelta`
 - `recipientFeePush_exactPushDelta`
 - `recipientFeePush_receiver_not_exact`
 - `recipientFeePush_receiverOutput_not_exact`
-- `exactPullDelta_of_tokenizedAddLiquidityX`
-- `exactPullDelta_of_tokenizedAddLiquidityY`
-- `exactPullDelta_of_tokenizedSwapXforY`
-- `exactPullDelta_of_tokenizedSwapYforX`
 - `notExactPull_incompatible_tokenizedAddLiquidityX`
 - `notExactPull_incompatible_tokenizedAddLiquidityY`
 - `notExactPull_incompatible_tokenizedSwapXforY`
@@ -91,6 +93,7 @@
 - `reserveSync_preserved_by_recipientFeePushY`
 - `reserveSync_and_outputDivergence_by_recipientFeePushY`
 - `reserveSync_and_removeLiquidityOutputDivergence_by_recipientFeePushX`
+- `reserveSync_and_removeLiquidityOutputDivergence_by_recipientFeePushY`
 - `exists_reserveSync_break_by_externalDrift`
 
 ## Refinement Scope
@@ -117,6 +120,7 @@ Each tokenized step relation encodes exact transfer-delta assumptions directly i
 - preserve abstract `Valid` via the existing Solidity refinement chain
 
 `CPAMM/TokenizedBehavior.lean` additionally formalizes token behavior classes and machine-checks that unsupported adversarial classes violate exact-transfer assumptions or can break reserve-sync.
+`CPAMM/TokenizedIOSemantics.lean` provides a dedicated refinement-facing IO exactness layer (`ExactPullDelta`, `ExactPushDelta`, `RecipientObservedOutputExact`) reused by tokenized behavior lemmas.
 
 ## Two-Repo Pipeline Position
 

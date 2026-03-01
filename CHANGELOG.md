@@ -17,6 +17,13 @@ All notable changes to this project are documented in this file.
 - Added `scripts/protocol_readiness_rehearsal.sh` to run strict-gate intake rehearsal against live RigidityCore target models and emit ready-to-prove packets.
 - Added readiness rehearsal report: `reports/PROTOCOL_READINESS_REHEARSAL.md`.
 - Updated `scripts/protocol_readiness_rehearsal.sh` to use real RigidityCore `targets/*/HANDOFF_READY.json` payloads when present (fallback to generated rehearsal payloads otherwise).
+- Closed remove-path output-divergence symmetry for tokenized recipient-fee semantics:
+  - Added Lean theorem `reserveSync_and_removeLiquidityOutputDivergence_by_recipientFeePushY`.
+  - Added adversarial test `test_outputFeeOnPoolTransfer_breaksObservedRemoveLiquidityOutputY`.
+  - Updated verification/assumption/security docs with theorem/test linkage for both remove outputs.
+- Added dedicated tokenized IO semantics module `CPAMM/TokenizedIOSemantics.lean`:
+  - moved `ExactPullDelta`, `ExactPushDelta`, `RecipientObservedOutputExact`, and exact-pull extraction lemmas into a refinement-facing shared layer.
+  - `CPAMM/TokenizedBehavior.lean` now imports the IO layer and focuses on behavior/adversarial proof obligations.
 - Added `PROTOCOL_TEMPLATE.md` defining the RigidityCore-to-cpamm-lean handoff contract:
   - pipeline ownership split
   - `System.json` schema-to-Lean mapping table grounded in `spec/SPEC.md`
