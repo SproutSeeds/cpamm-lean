@@ -8,6 +8,8 @@ OUT_DIR="${ROOT_DIR}/artifacts/commercial-review-package-${STAMP}"
 PIPELINE_PATH="${ROOT_DIR}/strategy/private/PIPELINE.csv"
 KPI_PATH="${ROOT_DIR}/strategy/private/KPI_TRACKER.csv"
 DEAL_INPUT_PATH=""
+PORTAL_INPUT_PATH=""
+PORTAL_DIR=""
 AS_OF_DATE="$(date -u +%F)"
 
 usage() {
@@ -19,6 +21,8 @@ Options:
   --pipeline <path>     Pipeline CSV (default: strategy/private/PIPELINE.csv)
   --kpi <path>          KPI CSV (default: strategy/private/KPI_TRACKER.csv)
   --deal-input <path>   Optional deal JSON for proposal/SOW generation
+  --portal-input <path> Optional portal JSON for evidence portal generation
+  --portal-dir <path>   Optional portal output directory (default: <out>/evidence-portal)
   --as-of <YYYY-MM-DD>  Snapshot date for pipeline health (default: today UTC)
   --out-dir <path>      Output directory (default: artifacts/commercial-review-package-<utcstamp>)
   -h, --help            Show this help message
@@ -46,6 +50,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --deal-input)
       DEAL_INPUT_PATH="$(make_abs "$2")"
+      shift 2
+      ;;
+    --portal-input)
+      PORTAL_INPUT_PATH="$(make_abs "$2")"
+      shift 2
+      ;;
+    --portal-dir)
+      PORTAL_DIR="$(make_abs "$2")"
       shift 2
       ;;
     --as-of)
@@ -88,6 +100,11 @@ if [[ -n "$DEAL_INPUT_PATH" && ! -f "$DEAL_INPUT_PATH" ]]; then
   exit 1
 fi
 
+if [[ -n "$PORTAL_INPUT_PATH" && ! -f "$PORTAL_INPUT_PATH" ]]; then
+  echo "error: missing portal input JSON: $PORTAL_INPUT_PATH" >&2
+  exit 1
+fi
+
 mkdir -p "$OUT_DIR"
 
 echo "==> output: $OUT_DIR"
@@ -98,6 +115,9 @@ VALIDATE_ARGS=(
 )
 if [[ -n "$DEAL_INPUT_PATH" ]]; then
   VALIDATE_ARGS+=("--deal-input" "$DEAL_INPUT_PATH")
+fi
+if [[ -n "$PORTAL_INPUT_PATH" ]]; then
+  VALIDATE_ARGS+=("--portal-input" "$PORTAL_INPUT_PATH")
 fi
 python3 "$ROOT_DIR/scripts/validate_strategy_data.py" "${VALIDATE_ARGS[@]}" \
   | tee "$OUT_DIR/strategy-data-validation.log"
@@ -120,6 +140,17 @@ if [[ -n "$DEAL_INPUT_PATH" ]]; then
     --input "$DEAL_INPUT_PATH" \
     --out-dir "$OUT_DIR/deal-pack" \
     --include-acceptance-template
+fi
+
+if [[ -n "$PORTAL_INPUT_PATH" ]]; then
+  if [[ -z "$PORTAL_DIR" ]]; then
+    PORTAL_DIR="$OUT_DIR/evidence-portal"
+  fi
+  echo "==> evidence portal"
+  python3 "$ROOT_DIR/scripts/evidence_portal.py" \
+    --input "$PORTAL_INPUT_PATH" \
+    --portal-dir "$PORTAL_DIR" \
+    --commercial-package-dir "$OUT_DIR"
 fi
 
 GIT_COMMIT="$(git -C "$ROOT_DIR" rev-parse HEAD)"
@@ -153,6 +184,9 @@ GIT_STATUS="$(git -C "$ROOT_DIR" status --short || true)"
   if [[ -n "$DEAL_INPUT_PATH" ]]; then
     echo "4. python3 scripts/deal_pack.py --input <deal-json> --out-dir <out>/deal-pack --include-acceptance-template"
   fi
+  if [[ -n "$PORTAL_INPUT_PATH" ]]; then
+    echo "5. python3 scripts/evidence_portal.py --input <portal-json> --portal-dir <dir> --commercial-package-dir <out>"
+  fi
 } > "$OUT_DIR/COMMANDS.txt"
 
 cat > "$OUT_DIR/MANIFEST.md" <<EOF_MANIFEST
@@ -167,6 +201,7 @@ Branch: $GIT_BRANCH
 - Weekly dashboard: WEEKLY_DASHBOARD.md
 - Pipeline health report: PIPELINE_HEALTH.md
 $(if [[ -n "$DEAL_INPUT_PATH" ]]; then echo "- Deal pack: deal-pack/"; fi)
+$(if [[ -n "$PORTAL_INPUT_PATH" ]]; then echo "- Evidence portal: ${PORTAL_DIR}"; fi)
 - Strategy data validation log: strategy-data-validation.log
 - Toolchain and source metadata: versions.txt
 - Command transcript list: COMMANDS.txt

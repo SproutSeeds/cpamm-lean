@@ -17,6 +17,77 @@ def run_cmd(args: list[str]) -> subprocess.CompletedProcess[str]:
 
 
 class StrategyToolingTests(unittest.TestCase):
+    def test_evidence_portal_generates_files_and_copies_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp = Path(tmp_dir)
+            portal_out = tmp / "portal"
+            commercial_src = tmp / "commercial"
+            review_src = tmp / "review"
+            commercial_src.mkdir(parents=True, exist_ok=True)
+            review_src.mkdir(parents=True, exist_ok=True)
+
+            (commercial_src / "MANIFEST.md").write_text("# Commercial Package\n", encoding="utf-8")
+            (commercial_src / "SHA256SUMS").write_text("abc  file.txt\n", encoding="utf-8")
+            (commercial_src / "file.txt").write_text("ok\n", encoding="utf-8")
+            (review_src / "MANIFEST.md").write_text("# Review Package\n", encoding="utf-8")
+            (review_src / "SHA256SUMS").write_text("def  report.log\n", encoding="utf-8")
+            (review_src / "report.log").write_text("ok\n", encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/evidence_portal.py",
+                    "--input",
+                    "strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json",
+                    "--portal-dir",
+                    str(portal_out),
+                    "--commercial-package-dir",
+                    str(commercial_src),
+                    "--review-package-dir",
+                    str(review_src),
+                    "--copy-artifacts",
+                ]
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+
+            self.assertTrue((portal_out / "INDEX.md").exists())
+            self.assertTrue((portal_out / "STATUS.md").exists())
+            self.assertTrue((portal_out / "ARTIFACTS.md").exists())
+            self.assertTrue((portal_out / "ASSUMPTIONS_RISKS.md").exists())
+            self.assertTrue((portal_out / "FINDINGS.md").exists())
+            self.assertTrue((portal_out / "ACCESS.md").exists())
+            self.assertTrue((portal_out / "MANIFEST.json").exists())
+            self.assertTrue((portal_out / "artifacts/commercial-package/MANIFEST.md").exists())
+            self.assertTrue((portal_out / "artifacts/review-package/MANIFEST.md").exists())
+
+            index_text = (portal_out / "INDEX.md").read_text(encoding="utf-8")
+            self.assertIn("Engagement ID: example-protocol-a-2026q1", index_text)
+
+            artifacts_text = (portal_out / "ARTIFACTS.md").read_text(encoding="utf-8")
+            self.assertIn("Commercial Package", artifacts_text)
+            self.assertIn("Technical Review Package", artifacts_text)
+
+    def test_evidence_portal_rejects_bad_engagement_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp = Path(tmp_dir)
+            bad_input = tmp / "bad-input.json"
+            payload = json.loads(
+                (ROOT / "strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json").read_text(encoding="utf-8")
+            )
+            payload["engagement_id"] = "bad id with spaces"
+            bad_input.write_text(json.dumps(payload), encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/evidence_portal.py",
+                    "--input",
+                    str(bad_input),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("engagement_id must be slug-like", result.stdout)
+
     def test_create_cadence_issue_dry_run_kpi(self) -> None:
         result = run_cmd(
             [
@@ -79,6 +150,8 @@ class StrategyToolingTests(unittest.TestCase):
                 "strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv",
                 "--deal-input",
                 "strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json",
+                "--portal-input",
+                "strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json",
             ]
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
@@ -142,6 +215,26 @@ class StrategyToolingTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("kickoff <= midpoint <= handoff", result.stdout)
+
+    def test_validate_strategy_data_rejects_bad_portal_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            bad_portal = Path(tmp_dir) / "PORTAL_BAD.json"
+            payload = json.loads(
+                (ROOT / "strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json").read_text(encoding="utf-8")
+            )
+            payload["engagement_id"] = "bad id"
+            bad_portal.write_text(json.dumps(payload), encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/validate_strategy_data.py",
+                    "--portal-input",
+                    str(bad_portal),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("engagement_id must be slug-like", result.stdout)
 
     def test_deal_pack_generates_expected_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -275,6 +368,31 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertTrue((out_dir / "deal-pack/PROPOSAL.md").exists())
             self.assertTrue((out_dir / "deal-pack/SOW.md").exists())
             self.assertTrue((out_dir / "deal-pack/ACCEPTANCE_CRITERIA.md").exists())
+
+    def test_commercial_review_package_with_portal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out_dir = Path(tmp_dir) / "commercial-package"
+
+            result = run_cmd(
+                [
+                    "bash",
+                    "scripts/commercial_review_package.sh",
+                    "--pipeline",
+                    "strategy/assets/crm/PIPELINE_TEMPLATE.csv",
+                    "--kpi",
+                    "strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv",
+                    "--portal-input",
+                    "strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json",
+                    "--as-of",
+                    "2026-03-01",
+                    "--out-dir",
+                    str(out_dir),
+                ]
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertTrue((out_dir / "evidence-portal/INDEX.md").exists())
+            self.assertTrue((out_dir / "evidence-portal/ARTIFACTS.md").exists())
 
 
 if __name__ == "__main__":

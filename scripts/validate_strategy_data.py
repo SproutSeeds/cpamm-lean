@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Validate commercialization operating data files (pipeline, KPI, deal input)."""
+"""Validate commercialization operating data files (pipeline, KPI, deal input, portal input)."""
 
 from __future__ import annotations
 
 import argparse
 import csv
 import json
+import re
 from datetime import date
 from pathlib import Path
 
@@ -75,6 +76,15 @@ KPI_NON_NEGATIVE_FIELDS = {
     "mttr_hours",
     "nrr_pct",
 }
+
+PORTAL_REQUIRED_FIELDS = [
+    "engagement_id",
+    "client_name",
+    "protocol_name",
+    "engagement_type",
+    "status",
+    "owner",
+]
 
 
 class ValidationError(Exception):
@@ -272,11 +282,57 @@ def validate_deal_input(path: Path, contracts_dir: Path) -> None:
         raise ValidationError(f"{path}: sow timeline must satisfy start_date <= end_date")
 
 
+def validate_portal_input(path: Path) -> None:
+    if not path.exists():
+        raise ValidationError(f"missing file: {path}")
+    with path.open(encoding="utf-8") as handle:
+        try:
+            data = json.load(handle)
+        except json.JSONDecodeError as exc:
+            raise ValidationError(f"{path} invalid JSON: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValidationError(f"{path}: root must be a JSON object")
+
+    for key in PORTAL_REQUIRED_FIELDS:
+        value = str(data.get(key, "")).strip()
+        if not value:
+            raise ValidationError(f"{path}: missing required field {key!r}")
+
+    engagement_id = str(data.get("engagement_id", "")).strip()
+    if re.search(r"[^a-zA-Z0-9._-]", engagement_id):
+        raise ValidationError(
+            f"{path}: engagement_id must be slug-like (letters/numbers/._-), got {engagement_id!r}"
+        )
+
+    window = data.get("window", {})
+    if window is not None and not isinstance(window, dict):
+        raise ValidationError(f"{path}: field 'window' must be an object")
+    if isinstance(window, dict):
+        start = str(window.get("start", "")).strip()
+        end = str(window.get("end", "")).strip()
+        if start and parse_date(start) is None:
+            raise ValidationError(f"{path}: window.start must be YYYY-MM-DD, got {start!r}")
+        if end and parse_date(end) is None:
+            raise ValidationError(f"{path}: window.end must be YYYY-MM-DD, got {end!r}")
+
+    milestones = data.get("milestones", [])
+    if milestones is not None and not isinstance(milestones, list):
+        raise ValidationError(f"{path}: field 'milestones' must be a list")
+    if isinstance(milestones, list):
+        for idx, milestone in enumerate(milestones, start=1):
+            if not isinstance(milestone, dict):
+                raise ValidationError(f"{path}: milestone #{idx} must be an object")
+            date_raw = str(milestone.get("date", "")).strip()
+            if date_raw and parse_date(date_raw) is None:
+                raise ValidationError(f"{path}: milestone #{idx} date must be YYYY-MM-DD, got {date_raw!r}")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pipeline", type=Path, help="Path to pipeline CSV.")
     parser.add_argument("--kpi", type=Path, help="Path to KPI tracker CSV.")
     parser.add_argument("--deal-input", type=Path, help="Path to deal input JSON.")
+    parser.add_argument("--portal-input", type=Path, help="Path to evidence portal input JSON.")
     parser.add_argument(
         "--contracts-dir",
         type=Path,
@@ -288,8 +344,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    if args.pipeline is None and args.kpi is None and args.deal_input is None:
-        raise ValidationError("provide at least one of: --pipeline, --kpi, --deal-input")
+    if args.pipeline is None and args.kpi is None and args.deal_input is None and args.portal_input is None:
+        raise ValidationError("provide at least one of: --pipeline, --kpi, --deal-input, --portal-input")
 
     validated: list[str] = []
     if args.pipeline is not None:
@@ -301,6 +357,9 @@ def main() -> int:
     if args.deal_input is not None:
         validate_deal_input(args.deal_input, args.contracts_dir)
         validated.append(f"deal_input={args.deal_input}")
+    if args.portal_input is not None:
+        validate_portal_input(args.portal_input)
+        validated.append(f"portal_input={args.portal_input}")
 
     print("strategy data validation passed:")
     for item in validated:

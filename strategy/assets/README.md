@@ -19,6 +19,11 @@ These are operational templates for running the commercialization plan.
 - `contracts/SOW_TEMPLATE.md`
 - `contracts/ACCEPTANCE_CRITERIA_TEMPLATE.md`
 
+## Portal
+
+- `portal/PORTAL_INPUT_TEMPLATE.json`
+- `portal/README.md`
+
 ## Ops
 
 - `ops/KPI_TRACKER_TEMPLATE.csv`
@@ -68,7 +73,8 @@ Validate operating data before running automation:
 python3 scripts/validate_strategy_data.py \
   --pipeline strategy/private/PIPELINE.csv \
   --kpi strategy/private/KPI_TRACKER.csv \
-  --deal-input strategy/private/deals/example.json
+  --deal-input strategy/private/deals/example.json \
+  --portal-input strategy/private/portals/example.json
 ```
 
 Generate a single commercialization review bundle:
@@ -78,10 +84,25 @@ Generate a single commercialization review bundle:
   --pipeline strategy/private/PIPELINE.csv \
   --kpi strategy/private/KPI_TRACKER.csv \
   --deal-input strategy/private/deals/example.json \
+  --portal-input strategy/private/portals/example.json \
   --as-of 2026-03-01
 ```
 
 Default bundle output path: `artifacts/commercial-review-package-<utcstamp>/`.
+
+Generate an evidence portal for a client engagement:
+
+```bash
+mkdir -p strategy/private/portals
+cp strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json strategy/private/portals/example.json
+
+python3 scripts/evidence_portal.py \
+  --input strategy/private/portals/example.json \
+  --commercial-package-dir artifacts/commercial-review-package \
+  --review-package-dir artifacts/review-package \
+  --portal-dir strategy/private/portals/example-protocol-a-2026q1 \
+  --copy-artifacts
+```
 
 Cadence issue automation:
 

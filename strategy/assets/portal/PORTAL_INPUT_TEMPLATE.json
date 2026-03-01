@@ -1,0 +1,90 @@
+{
+  "engagement_id": "example-protocol-a-2026q1",
+  "client_name": "Example Protocol A",
+  "protocol_name": "Example Protocol A",
+  "engagement_type": "Verification Sprint",
+  "status": "in_progress",
+  "owner": "Cody Mitchell",
+  "technical_contact": "Alex Doe (CTO)",
+  "window": {
+    "start": "2026-03-08",
+    "end": "2026-04-05"
+  },
+  "objectives": [
+    "Ship reviewer-grade formal/test/security evidence before launch.",
+    "Reduce regression risk with CI-enforced release gates."
+  ],
+  "scope_in": [
+    "Lean theorem and refinement gap closure for agreed modules.",
+    "Differential + invariant test hardening in Foundry.",
+    "Slither validation and triaged detector review."
+  ],
+  "scope_out": [
+    "Governance and tokenomics design.",
+    "Oracle architecture design beyond explicit engagement scope."
+  ],
+  "milestones": [
+    {
+      "name": "Kickoff",
+      "date": "2026-03-08",
+      "status": "done",
+      "notes": "Scope and assumptions confirmed."
+    },
+    {
+      "name": "Midpoint Review",
+      "date": "2026-03-22",
+      "status": "scheduled",
+      "notes": "Client checkpoint on theorem + test progress."
+    },
+    {
+      "name": "Final Handoff",
+      "date": "2026-04-05",
+      "status": "scheduled",
+      "notes": "Delivery and signoff package."
+    }
+  ],
+  "gate_status": {
+    "formal": "green",
+    "tests": "green",
+    "security": "yellow",
+    "ci": "green"
+  },
+  "assumptions": [
+    "Client provides timely access to current code and technical contacts.",
+    "No major architecture pivots during sprint window."
+  ],
+  "risks": [
+    {
+      "title": "Late-breaking scope additions",
+      "severity": "medium",
+      "status": "open",
+      "mitigation": "Use change-control and freeze window for final week."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-001",
+      "title": "Potential invariant coverage blind spot in mixed-operation sequences",
+      "severity": "medium",
+      "status": "resolved",
+      "evidence": "Linked in sprint artifact package"
+    }
+  ],
+  "next_actions": [
+    {
+      "action": "Client to review midpoint scope deltas",
+      "owner": "Alex Doe",
+      "due": "2026-03-23"
+    },
+    {
+      "action": "Team to finalize review package and handoff notes",
+      "owner": "Cody Mitchell",
+      "due": "2026-04-05"
+    }
+  ],
+  "client_access": [
+    "Current status page and milestone tracker.",
+    "Downloadable evidence artifacts and manifests.",
+    "Assumptions, risks, findings, and mitigation status."
+  ]
+}

@@ -43,6 +43,7 @@ Generate a single reviewer bundle (logs, JSON, SARIF, LCOV, checksums):
 
 Business and execution playbooks for the highest-EV path are in `strategy/`:
 - [`strategy/HIGHEST_EV_PATH.md`](strategy/HIGHEST_EV_PATH.md)
+- [`strategy/EVIDENCE_PORTAL.md`](strategy/EVIDENCE_PORTAL.md)
 - [`strategy/OFFER_AND_GTM.md`](strategy/OFFER_AND_GTM.md)
 - [`strategy/REVENUE_MODEL.md`](strategy/REVENUE_MODEL.md)
 - [`strategy/EXECUTION_90_DAYS.md`](strategy/EXECUTION_90_DAYS.md)
@@ -57,6 +58,7 @@ Execution templates and trackers are in:
 - [`strategy/assets/crm/CRM_SCHEMA.md`](strategy/assets/crm/CRM_SCHEMA.md)
 - [`strategy/assets/crm/PIPELINE_TEMPLATE.csv`](strategy/assets/crm/PIPELINE_TEMPLATE.csv)
 - [`strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv`](strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv)
+- [`strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json`](strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json)
 
 Generate weekly business dashboard from trackers:
 
@@ -98,21 +100,34 @@ Validate commercialization operating data (pipeline/KPI/deal input):
 python3 scripts/validate_strategy_data.py \
   --pipeline strategy/private/PIPELINE.csv \
   --kpi strategy/private/KPI_TRACKER.csv \
-  --deal-input strategy/private/deals/example.json
+  --deal-input strategy/private/deals/example.json \
+  --portal-input strategy/private/portals/example.json
 ```
 
-Generate a commercialization review package (dashboard + pipeline health + optional deal pack):
+Generate a commercialization review package (dashboard + pipeline health + optional deal pack + optional portal):
 
 ```bash
 ./scripts/commercial_review_package.sh \
   --pipeline strategy/private/PIPELINE.csv \
   --kpi strategy/private/KPI_TRACKER.csv \
   --deal-input strategy/private/deals/example.json \
+  --portal-input strategy/private/portals/example.json \
   --as-of 2026-03-01
 ```
 
 This writes a verifiable bundle under `artifacts/commercial-review-package-<utcstamp>/`
 plus a `.tar.gz` archive.
+
+Generate an evidence portal for a specific client engagement:
+
+```bash
+python3 scripts/evidence_portal.py \
+  --input strategy/private/portals/example.json \
+  --commercial-package-dir artifacts/commercial-review-package \
+  --review-package-dir artifacts/review-package \
+  --portal-dir strategy/private/portals/example-protocol-a-2026q1 \
+  --copy-artifacts
+```
 
 Operating cadence issue templates are now included in:
 - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`

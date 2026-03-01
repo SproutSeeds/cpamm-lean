@@ -6,6 +6,7 @@ All notable changes to this project are documented in this file.
 
 - Added commercialization playbook docs under `strategy/`:
   - highest-EV path thesis and sequencing
+  - evidence portal design/purpose and generation workflow
   - offer/GTM model and revenue model
   - 90-day execution plan and KPI scoreboard
   - operating cadence and risk register
@@ -21,10 +22,12 @@ All notable changes to this project are documented in this file.
 - Added `scripts/pipeline_health.py` to score funnel health and produce close-horizon forecast reports from CRM pipeline data.
 - Added `scripts/commercial_review_package.sh` to build a one-command commercialization evidence bundle (dashboard, pipeline health, optional deal pack, checksums, tarball).
 - Added `scripts/validate_strategy_data.py` with strict schema/range/date checks for pipeline CSV, KPI CSV, and deal JSON.
+- Added `scripts/evidence_portal.py` to generate multi-page client-facing evidence portals from engagement metadata and artifact bundles.
+- Added evidence portal templates under `strategy/assets/portal/` (`PORTAL_INPUT_TEMPLATE.json` + usage README).
 - Added `scripts/create_cadence_issue.py` to create recurring KPI/risk cadence issues with label bootstrapping and duplicate-title protection.
 - Added strategy tooling regression tests in `tests/test_strategy_tooling.py`.
-- Added `strategy-tooling` CI gate checks for both strategy-data validation and script regression tests on every push/PR.
-- Added `commercial-review-package` CI job to build and upload a sanitized commercialization evidence artifact on every push/PR.
+- Added `strategy-tooling` CI gate checks for strategy-data validation (including portal input) and script regression tests on every push/PR.
+- Added `commercial-review-package` CI job to build and upload a sanitized commercialization evidence artifact on every push/PR, including optional evidence portal generation from template input.
 - Added `.github/workflows/operating-cadence.yml` to auto-open weekly KPI and monthly risk review issues (plus manual dispatch support).
 - Added GitHub issue templates for execution cadence:
   - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`
