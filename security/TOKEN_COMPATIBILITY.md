@@ -52,6 +52,13 @@ This matrix documents the ERC20 behavior classes exercised by the tokenized inte
 - Evidence:
   - `solidity/test/CPAMM.Tokenized.Adversarial.t.sol::test_revertsOnExternalBalanceDrift`
 
+7. **Pool-output recipient fee tokens (output-path semantic divergence)**
+- Behavior: when the pool sends `amount`, pool balance drops by `amount` exactly, but recipient is credited `< amount`.
+- Outcome: not rejected by reserve-sync checks; unsupported for exact user-observed output semantics.
+- Evidence:
+  - `solidity/test/CPAMM.Tokenized.Adversarial.t.sol::test_outputFeeOnPoolTransfer_breaksObservedSwapXforYOutput`
+  - `solidity/test/CPAMM.Tokenized.Adversarial.t.sol::test_outputFeeOnPoolTransfer_breaksObservedSwapYforXOutput`
+
 ## Interpretation
 
-`CPAMMTokenized` is intentionally strict: it only supports exact-balance semantics. This keeps reserve accounting aligned with the Lean tokenized refinement assumptions (`CPAMM/TokenizedRefinement.lean`).
+`CPAMMTokenized` is intentionally strict around pool-balance sync. This keeps reserve accounting aligned with the Lean tokenized refinement assumptions (`CPAMM/TokenizedRefinement.lean`), but does not by itself guarantee exact user-observed output transfer semantics for every non-standard token class.

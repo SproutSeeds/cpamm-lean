@@ -230,6 +230,38 @@ theorem sim_tokenizedStep_to_solidityStep
   | removeLiquidity addr shares h =>
       exact SolidityStep.removeLiquidity addr shares h.1
 
+/-- Abstract validity is preserved by one tokenized step. -/
+theorem valid_preserved_tokenizedStep
+    {τ τ' : TokenizedStorage}
+    (hv : Valid (alphaTokenized τ))
+    (hstep : TokenizedStep τ τ') :
+    Valid (alphaTokenized τ') := by
+  cases hstep with
+  | swapXforY dx h =>
+      exact valid_preserved_tokenizedSwapXforY τ τ' dx hv h
+  | swapYforX dy h =>
+      exact valid_preserved_tokenizedSwapYforX τ τ' dy hv h
+  | addLiquidity addr dx dy h =>
+      exact valid_preserved_tokenizedAddLiquidity τ τ' addr dx dy hv h
+  | removeLiquidity addr shares h =>
+      exact valid_preserved_tokenizedRemoveLiquidity τ τ' addr shares hv h
+
+/-- Reserve-sync is preserved by one tokenized step. -/
+theorem reserveSync_preserved_tokenizedStep
+    {τ τ' : TokenizedStorage}
+    (hsync : ReserveSync τ)
+    (hstep : TokenizedStep τ τ') :
+    ReserveSync τ' := by
+  cases hstep with
+  | swapXforY dx h =>
+      exact reserveSync_preserved_tokenizedSwapXforY τ τ' dx hsync h
+  | swapYforX dy h =>
+      exact reserveSync_preserved_tokenizedSwapYforX τ τ' dy hsync h
+  | addLiquidity addr dx dy h =>
+      exact reserveSync_preserved_tokenizedAddLiquidity τ τ' addr dx dy hsync h
+  | removeLiquidity addr shares h =>
+      exact reserveSync_preserved_tokenizedRemoveLiquidity τ τ' addr shares hsync h
+
 /-- Reserve-sync and abstract validity are jointly preserved by one tokenized step. -/
 theorem validAndSync_preserved_tokenizedStep
     {τ τ' : TokenizedStorage}
@@ -237,19 +269,9 @@ theorem validAndSync_preserved_tokenizedStep
     (hsync : ReserveSync τ)
     (hstep : TokenizedStep τ τ') :
     Valid (alphaTokenized τ') ∧ ReserveSync τ' := by
-  cases hstep with
-  | swapXforY dx h =>
-      refine ⟨valid_preserved_tokenizedSwapXforY τ τ' dx hv h,
-        reserveSync_preserved_tokenizedSwapXforY τ τ' dx hsync h⟩
-  | swapYforX dy h =>
-      refine ⟨valid_preserved_tokenizedSwapYforX τ τ' dy hv h,
-        reserveSync_preserved_tokenizedSwapYforX τ τ' dy hsync h⟩
-  | addLiquidity addr dx dy h =>
-      refine ⟨valid_preserved_tokenizedAddLiquidity τ τ' addr dx dy hv h,
-        reserveSync_preserved_tokenizedAddLiquidity τ τ' addr dx dy hsync h⟩
-  | removeLiquidity addr shares h =>
-      refine ⟨valid_preserved_tokenizedRemoveLiquidity τ τ' addr shares hv h,
-        reserveSync_preserved_tokenizedRemoveLiquidity τ τ' addr shares hsync h⟩
+  refine ⟨?_, ?_⟩
+  · exact valid_preserved_tokenizedStep hv hstep
+  · exact reserveSync_preserved_tokenizedStep hsync hstep
 
 /-- Reachability by finite sequences of tokenized steps. -/
 inductive TokenizedReachable : TokenizedStorage → TokenizedStorage → Prop

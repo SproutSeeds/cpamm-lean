@@ -105,8 +105,37 @@ contract RebaseableERC20 is AdvMockERC20 {
     }
 }
 
+contract PoolOutputFeeERC20 is AdvMockERC20 {
+    uint256 public immutable feeBps;
+    address public pool;
+
+    constructor(string memory _name, string memory _symbol, uint256 _feeBps) AdvMockERC20(_name, _symbol) {
+        require(_feeBps < 10_000, "invalid fee");
+        feeBps = _feeBps;
+    }
+
+    function setPool(address _pool) external {
+        pool = _pool;
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal override {
+        require(balanceOf[from] >= amount, "insufficient balance");
+        balanceOf[from] -= amount;
+
+        if (from == pool && feeBps > 0) {
+            uint256 fee = (amount * feeBps) / 10_000;
+            uint256 credited = amount - fee;
+            balanceOf[to] += credited;
+            totalSupply -= fee;
+        } else {
+            balanceOf[to] += amount;
+        }
+    }
+}
+
 contract CPAMMTokenizedAdversarialTest is Test {
     uint256 internal constant BASE = 1_000_000;
+    uint256 internal constant OUTPUT_FEE_BPS = 100;
 
     function _deploy(AdvMockERC20 tokenX, AdvMockERC20 tokenY) internal returns (CPAMMTokenized cpamm) {
         cpamm = new CPAMMTokenized(IERC20Minimal(address(tokenX)), IERC20Minimal(address(tokenY)), 3, 1000);
@@ -164,5 +193,41 @@ contract CPAMMTokenizedAdversarialTest is Test {
 
         vm.expectRevert("reserveX mismatch");
         cpamm.swapXforY(10_000);
+    }
+
+    function test_outputFeeOnPoolTransfer_breaksObservedSwapXforYOutput() public {
+        AdvMockERC20 tokenX = new AdvMockERC20("Token X", "X");
+        PoolOutputFeeERC20 tokenY = new PoolOutputFeeERC20("Output Fee Y", "ofY", OUTPUT_FEE_BPS);
+        CPAMMTokenized cpamm = _deploy(tokenX, tokenY);
+        tokenY.setPool(address(cpamm));
+
+        cpamm.addLiquidity(BASE, BASE);
+
+        uint256 yBefore = tokenY.balanceOf(address(this));
+        uint256 quotedOut = cpamm.swapXforY(100_000);
+        uint256 observedOut = tokenY.balanceOf(address(this)) - yBefore;
+
+        assertEq(cpamm.reserveX(), tokenX.balanceOf(address(cpamm)), "reserveX sync");
+        assertEq(cpamm.reserveY(), tokenY.balanceOf(address(cpamm)), "reserveY sync");
+        assertLt(observedOut, quotedOut, "recipient output must diverge");
+        assertEq(quotedOut - observedOut, (quotedOut * OUTPUT_FEE_BPS) / 10_000, "unexpected output fee");
+    }
+
+    function test_outputFeeOnPoolTransfer_breaksObservedSwapYforXOutput() public {
+        PoolOutputFeeERC20 tokenX = new PoolOutputFeeERC20("Output Fee X", "ofX", OUTPUT_FEE_BPS);
+        AdvMockERC20 tokenY = new AdvMockERC20("Token Y", "Y");
+        CPAMMTokenized cpamm = _deploy(tokenX, tokenY);
+        tokenX.setPool(address(cpamm));
+
+        cpamm.addLiquidity(BASE, BASE);
+
+        uint256 xBefore = tokenX.balanceOf(address(this));
+        uint256 quotedOut = cpamm.swapYforX(100_000);
+        uint256 observedOut = tokenX.balanceOf(address(this)) - xBefore;
+
+        assertEq(cpamm.reserveX(), tokenX.balanceOf(address(cpamm)), "reserveX sync");
+        assertEq(cpamm.reserveY(), tokenY.balanceOf(address(cpamm)), "reserveY sync");
+        assertLt(observedOut, quotedOut, "recipient output must diverge");
+        assertEq(quotedOut - observedOut, (quotedOut * OUTPUT_FEE_BPS) / 10_000, "unexpected output fee");
     }
 }

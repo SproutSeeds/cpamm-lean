@@ -27,6 +27,7 @@ This note defines the formal/spec alignment plan for the ERC20-backed extension
   - `CPAMM/TokenizedBehavior.lean`
   - formal token-class partition (`TokenClass`, `SupportedTokenClass`)
   - adversarial non-exact lemmas (`feeOnTransferPull_not_exact`, `inflationaryPull_not_exact`, `noOpPull_not_exact`)
+  - output-path recipient-fee lemmas (`recipientFeePush_exactPushDelta`, `recipientFeePush_receiver_not_exact`)
   - explicit reserve-sync break witness (`exists_reserveSync_break_by_externalDrift`)
 
 ## Lean Refinement Scope Today
@@ -58,19 +59,29 @@ Implemented:
 - It also includes reserve-sync non-preservation theorems under external drift with unchanged core reserves:
   - `reserveSync_not_preserved_by_externalDriftX`
   - `reserveSync_not_preserved_by_externalDriftY`
+- It now includes output-path divergence lemmas for recipient-fee token behavior:
+  - `reserveSync_preserved_by_recipientFeePushY`
+  - `reserveSync_and_outputDivergence_by_recipientFeePushY`
+  - matched by adversarial Solidity tests where returned quote differs from recipient-observed transfer while reserve-sync holds.
 
 3. **Proof/Test Coupling Automation**
 - CI validation in `scripts/validate_assumption_matrix.py` now checks:
   - fully-qualified test references resolve to real Solidity test functions
   - Lean symbols in matrix Lean-encoding cells resolve to declarations in `CPAMM/*.lean`
 
+4. **Projection Abstraction Cleanup**
+- Added step-level helper theorems:
+  - `valid_preserved_tokenizedStep`
+  - `reserveSync_preserved_tokenizedStep`
+- This factors repeated case analysis out of `validAndSync_preserved_tokenizedStep` and provides reusable scaffolding for future tokenized modules.
+
 ## Remaining Priority Work
 
-1. **Projection Abstraction Cleanup**
-- Factor shared tokenized/symbolic projection lemmas to reduce duplication across future token-integrated modules.
+1. **Output-Path Coverage Beyond Swap**
+- Extend recipient-observed output divergence theorem/test pairs to the remove-liquidity output path (`_pushExact` transfer semantics).
 
-2. **Unsupported-Behavior Coverage Expansion**
-- Add additional theorem/test pairs for unsupported output-path semantics where reserve-sync can remain true but user-observable transfer semantics diverge.
+2. **Token Semantics Interface Tightening**
+- Introduce a first-class recipient-observed transfer semantics relation in Lean and connect it to explicit test obligations in the assumption matrix.
 
 ## Reviewer Guidance
 

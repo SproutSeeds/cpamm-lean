@@ -16,6 +16,7 @@ inductive TokenClass where
   | inflationary
   | noOpTransferFrom
   | externalBalanceDrift
+  | recipientFeeOnOutput
   deriving DecidableEq, Repr
 
 /-- Classes accepted by `CPAMMTokenized`'s strict reserve/balance checks. -/
@@ -58,6 +59,19 @@ def ExternalBalanceDrift (before after drift : ℕ) : Prop :=
   drift > 0 ∧
   after = before + drift
 
+/--
+  Recipient-fee output transfer behavior:
+  the pool debits `amount` exactly, but the recipient is credited only `amount - fee`.
+-/
+def RecipientFeePush
+    (poolBefore poolAfter recipientBefore recipientAfter amount fee : ℕ) : Prop :=
+  amount > 0 ∧
+  fee > 0 ∧
+  fee < amount ∧
+  amount ≤ poolBefore ∧
+  poolAfter = poolBefore - amount ∧
+  recipientAfter = recipientBefore + (amount - fee)
+
 theorem feeOnTransferPull_not_exact
     {before after amount fee : ℕ}
     (h : FeeOnTransferPull before after amount fee) :
@@ -97,6 +111,39 @@ theorem noOpPull_not_exact
   calc
     before = after := hafter.symm
     _ = before + amount := hexact
+
+/-- Recipient-fee output can still satisfy exact pool push delta. -/
+theorem recipientFeePush_exactPushDelta
+    {poolBefore poolAfter recipientBefore recipientAfter amount fee : ℕ}
+    (h : RecipientFeePush poolBefore poolAfter recipientBefore recipientAfter amount fee) :
+    ExactPushDelta poolBefore poolAfter amount := by
+  rcases h with
+    ⟨_hamount_pos, _hfee_pos, _hfee_lt_amount, hamount_le_pool, hpool_after, _hrecipient_after⟩
+  calc
+    poolBefore = (poolBefore - amount) + amount := by
+      symm
+      exact Nat.sub_add_cancel hamount_le_pool
+    _ = poolAfter + amount := by simp [hpool_after]
+
+/-- Recipient-fee output implies recipient-observed output is not exact. -/
+theorem recipientFeePush_receiver_not_exact
+    {poolBefore poolAfter recipientBefore recipientAfter amount fee : ℕ}
+    (h : RecipientFeePush poolBefore poolAfter recipientBefore recipientAfter amount fee) :
+    ¬ ExactPullDelta recipientBefore recipientAfter amount := by
+  rcases h with
+    ⟨hamount_pos, hfee_pos, _hfee_lt_amount, _hamount_le_pool, _hpool_after, hrecipient_after⟩
+  intro hexact
+  have hlt : amount - fee < amount := Nat.sub_lt hamount_pos hfee_pos
+  have hlt' :
+      recipientBefore + (amount - fee) < recipientBefore + amount :=
+    Nat.add_lt_add_left hlt recipientBefore
+  have hneq :
+      recipientBefore + (amount - fee) ≠ recipientBefore + amount :=
+    ne_of_lt hlt'
+  apply hneq
+  calc
+    recipientBefore + (amount - fee) = recipientAfter := hrecipient_after.symm
+    _ = recipientBefore + amount := hexact
 
 /-- Tokenized add-liquidity enforces an exact pull delta on token X. -/
 theorem exactPullDelta_of_tokenizedAddLiquidityX
@@ -193,6 +240,53 @@ theorem noOpPull_incompatible_tokenizedSwapYforX
     ¬ TokenizedSwapYforX τ τ' dy := by
   exact notExactPull_incompatible_tokenizedSwapYforX
     (hnot := noOpPull_not_exact hnoop)
+
+/--
+  Reserve-sync can be preserved even when output transfer semantics diverge for the recipient.
+  This captures output-path token classes that are invisible to reserve-sync alone.
+-/
+theorem reserveSync_preserved_by_recipientFeePushY
+    {τ τ' : TokenizedStorage}
+    {recipientBefore recipientAfter amount fee : ℕ}
+    (hsync : ReserveSync τ)
+    (hresX : τ'.core.reserveX = τ.core.reserveX)
+    (hresY : τ'.core.reserveY = τ.core.reserveY - amount)
+    (hbalX : τ'.tokenBalX = τ.tokenBalX)
+    (hpush :
+      RecipientFeePush
+        τ.tokenBalY τ'.tokenBalY
+        recipientBefore recipientAfter amount fee) :
+    ReserveSync τ' := by
+  rcases hsync with ⟨hXsync, hYsync⟩
+  rcases hpush with
+    ⟨_hamount_pos, _hfee_pos, _hfee_lt_amount, _hamount_le_pool, hpool_after, _hrecipient_after⟩
+  refine ⟨?_, ?_⟩
+  · calc
+      τ'.core.reserveX = τ.core.reserveX := hresX
+      _ = τ.tokenBalX := hXsync
+      _ = τ'.tokenBalX := hbalX.symm
+  · calc
+      τ'.core.reserveY = τ.core.reserveY - amount := hresY
+      _ = τ.tokenBalY - amount := by simp [hYsync]
+      _ = τ'.tokenBalY := hpool_after.symm
+
+/-- Combined statement: reserve-sync can hold while recipient output is non-exact. -/
+theorem reserveSync_and_outputDivergence_by_recipientFeePushY
+    {τ τ' : TokenizedStorage}
+    {recipientBefore recipientAfter amount fee : ℕ}
+    (hsync : ReserveSync τ)
+    (hresX : τ'.core.reserveX = τ.core.reserveX)
+    (hresY : τ'.core.reserveY = τ.core.reserveY - amount)
+    (hbalX : τ'.tokenBalX = τ.tokenBalX)
+    (hpush :
+      RecipientFeePush
+        τ.tokenBalY τ'.tokenBalY
+        recipientBefore recipientAfter amount fee) :
+    ReserveSync τ' ∧
+      ¬ ExactPullDelta recipientBefore recipientAfter amount := by
+  refine ⟨?_, ?_⟩
+  · exact reserveSync_preserved_by_recipientFeePushY hsync hresX hresY hbalX hpush
+  · exact recipientFeePush_receiver_not_exact hpush
 
 theorem externalBalanceDrift_not_exactSync
     {before after drift : ℕ}
