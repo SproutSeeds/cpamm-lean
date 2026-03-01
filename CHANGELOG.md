@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+- Added `PROTOCOL_TEMPLATE.md` defining the RigidityCore-to-cpamm-lean handoff contract:
+  - pipeline ownership split
+  - `System.json` schema-to-Lean mapping table grounded in `spec/SPEC.md`
+  - strict SUNFLOWER gate prerequisites
+  - worked CPAMM `System.json` -> `CPAMM/Refinement.lean` mapping example
+- Added `Protocol/` engagement scaffold:
+  - `Protocol/README.md`
+  - `Protocol/State.lean`
+  - `Protocol/Refinement.lean` (intentional scaffold `sorry` placeholders)
+  - `Protocol/Rounding.lean`
+- Updated `VERIFICATION.md` with explicit two-repo pipeline positioning and Lean-start gate conditions.
+- Updated `security/AUDIT_README.md` with `Pipeline Position` section clarifying discovery/confirmation vs certificate ownership boundaries.
 - Added `strategy/README.md` to define the public technical vs private commercial boundary.
 - Removed tracked commercial playbook documents from `strategy/`:
   - `HIGHEST_EV_PATH.md`

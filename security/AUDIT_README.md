@@ -28,6 +28,27 @@ Security goals:
 - Swap outputs remain bounded by reserves.
 - Refinement from Solidity integer behavior to abstract Lean relations is explicit and machine-checked.
 
+## Pipeline Position
+
+This repo is the proof-certificate layer in a two-repo process.
+
+1. RigidityCore owns discovery and confirmation
+- Protocol sweep and structural signal discovery.
+- Contract-level replay confirmation and materiality checks.
+- Audit dedup gate decisions for the lane.
+
+2. cpamm-lean owns formal certificates
+- Lean theorem development and machine-checked proof artifacts.
+- Refinement mapping from concrete arithmetic behavior to abstract relations.
+- Reviewer-facing proof boundary documentation.
+
+SUNFLOWER gate rule:
+- Lean work is gated on confirmed findings only (no speculative proof runs).
+- Prerequisites before Lean begins:
+  1. Contract replay determinism established.
+  2. Audit dedup has no unresolved overlap.
+  3. Measurable impact signal exists for escalation.
+
 ## Explicit Assumptions
 
 - Address abstraction in Lean uses `SolAddress := ℕ`.

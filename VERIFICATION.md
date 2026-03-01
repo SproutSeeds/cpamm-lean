@@ -109,6 +109,26 @@ Each tokenized step relation encodes exact transfer-delta assumptions directly i
 
 `CPAMM/TokenizedBehavior.lean` additionally formalizes token behavior classes and machine-checks that unsupported adversarial classes violate exact-transfer assumptions or can break reserve-sync.
 
+## Two-Repo Pipeline Position
+
+This repository is the proof layer in a two-repo workflow:
+
+1. RigidityCore (discovery/confirmation layer)
+- Owns protocol sweep, finding discovery, contract-level replay confirmation, materiality signals, and audit dedup.
+- Emits `System.json`-anchored evidence for confirmed lanes.
+
+2. cpamm-lean (certificate layer, this repo)
+- Owns machine-checked Lean theorem development, refinement proofs, and reviewer-facing proof boundary documentation.
+
+Handoff boundary:
+- Lean work here begins only after RigidityCore has produced a confirmed finding package.
+- This repo does not run speculative pre-confirmation Lean work.
+
+Gate rule before Lean starts:
+1. Contract replay determinism is established.
+2. Audit dedup has no unresolved overlap for the lane.
+3. The lane shows measurable impact signal worth escalation.
+
 ## Rounding Bounds
 
 From `CPAMM/Rounding.lean`:
