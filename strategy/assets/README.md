@@ -88,3 +88,9 @@ Cadence issue automation:
 - Workflow: `.github/workflows/operating-cadence.yml`
 - Uses `scripts/create_cadence_issue.py` to open recurring KPI and risk-review issues.
 - Supports manual workflow dispatch with optional `reference_date` override.
+
+Commercial package CI artifact:
+
+- Workflow: `.github/workflows/ci.yml` job `commercial-review-package`
+- Builds a sanitized commercialization bundle from template data each push/PR.
+- Publishes artifact names: `commercial-review-package` directory and tarball.

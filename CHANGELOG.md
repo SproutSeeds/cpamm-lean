@@ -24,6 +24,7 @@ All notable changes to this project are documented in this file.
 - Added `scripts/create_cadence_issue.py` to create recurring KPI/risk cadence issues with label bootstrapping and duplicate-title protection.
 - Added strategy tooling regression tests in `tests/test_strategy_tooling.py`.
 - Added `strategy-tooling` CI gate checks for both strategy-data validation and script regression tests on every push/PR.
+- Added `commercial-review-package` CI job to build and upload a sanitized commercialization evidence artifact on every push/PR.
 - Added `.github/workflows/operating-cadence.yml` to auto-open weekly KPI and monthly risk review issues (plus manual dispatch support).
 - Added GitHub issue templates for execution cadence:
   - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`

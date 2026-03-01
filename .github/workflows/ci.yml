@@ -195,6 +195,43 @@ jobs:
             artifacts/strategy-tooling.log
           if-no-files-found: warn
 
+  commercial-review-package:
+    runs-on: ubuntu-latest
+    needs: [strategy-tooling]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - run: mkdir -p artifacts
+      - name: Build commercial review package (template data)
+        run: |
+          ./scripts/commercial_review_package.sh \
+            --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
+            --kpi strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv \
+            --deal-input strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json \
+            --as-of 2026-03-01 \
+            --out-dir artifacts/commercial-review-package
+      - name: Commercial package summary
+        run: |
+          {
+            echo "## Commercial Review Package"
+            echo ""
+            echo "Generated bundle:"
+            echo "- \`artifacts/commercial-review-package\`"
+            echo "- \`artifacts/commercial-review-package.tar.gz\`"
+            echo ""
+            tail -n 20 artifacts/commercial-review-package/MANIFEST.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: commercial-review-package
+          path: |
+            artifacts/commercial-review-package
+            artifacts/commercial-review-package.tar.gz
+          if-no-files-found: error
+
   review-package:
     runs-on: ubuntu-latest
     needs: [lean, solidity, security, strategy-tooling]
