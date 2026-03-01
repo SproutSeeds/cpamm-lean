@@ -5,6 +5,7 @@
 Formally verified constant-product AMM artifact:
 - Lean 4 model and proofs over rationals (`CPAMM/*.lean`)
 - Solidity implementation (`solidity/src/CPAMM.sol`)
+- ERC20-backed Solidity extension (`solidity/src/CPAMMTokenized.sol`)
 - Foundry tests (`solidity/test/CPAMM.t.sol`)
 - Refinement layer from Solidity storage relations to Lean transitions
 
@@ -34,6 +35,7 @@ cd solidity
 
 Differential coverage includes swap/add/remove checks plus a mixed-operation stateful shadow-model fuzz test.
 The suite also includes a Foundry invariant campaign (`CPAMM.Invariant.t.sol`) with a two-actor stateful handler.
+An ERC20-backed integration suite (`CPAMM.Tokenized.t.sol`) checks reserve/token-balance consistency and fee-on-transfer rejection.
 
 Run Slither static analysis:
 
@@ -88,7 +90,9 @@ CPAMM/
   Refinement.lean
 solidity/
   src/CPAMM.sol
+  src/CPAMMTokenized.sol
   test/CPAMM.t.sol
+  test/CPAMM.Tokenized.t.sol
 .github/workflows/ci.yml
 VERIFICATION.md
 scripts/repro.sh
@@ -99,3 +103,4 @@ scripts/repro.sh
 This is a minimal verifiable AMM core artifact (no oracle/TWAP/governance/upgrade logic).
 Refinement for swaps and liquidity operations is modeled with integer-floor arithmetic and explicit ±1 bounds against exact rational quantities, documented in [`VERIFICATION.md`](VERIFICATION.md).
 The Solidity contract intentionally enforces `shares < totalSupply` on `removeLiquidity`; the `dL = L` full-withdrawal case is modeled and proved only at the abstract Lean boundary layer.
+`CPAMMTokenized.sol` extends this with real ERC20 transfers and reserve/balance checks; it is currently test-validated (not yet part of the Lean refinement proof chain).

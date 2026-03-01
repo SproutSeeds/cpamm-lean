@@ -50,6 +50,10 @@ Foundry tests (`solidity/test/*.t.sol`) cover:
 - Unit and fuzz checks for contract behavior.
 - Differential shadow-model checks against an independent integer model.
 - Stateful invariant campaign via handler-driven random call sequences.
+- ERC20-backed integration checks (`CPAMM.Tokenized.t.sol`) for reserve/token-balance consistency and fee-on-transfer rejection.
+
+Note:
+- `CPAMMTokenized.sol` is currently test-validated only; the Lean refinement proof chain remains scoped to `CPAMM.sol`.
 
 Static analysis (`scripts/security/slither.sh`):
 - Fails CI on non-triaged findings.

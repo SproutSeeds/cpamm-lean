@@ -7,12 +7,14 @@ Date: 2026-03-01
 This validation pass adds:
 - Differential fuzzing between on-chain CPAMM behavior and an independent reference model.
 - Stateful invariant fuzzing via Foundry `StdInvariant` (two LP actors).
+- ERC20-backed integration testing for reserve/token-balance consistency.
 - External static analysis using Slither.
 
 ## Differential Fuzzing
 
 File:
 - `solidity/test/CPAMM.Differential.t.sol`
+- `solidity/test/CPAMM.Tokenized.t.sol`
 
 Added tests:
 1. `testFuzz_differential_swapXforY_matches_model_and_bound`
@@ -21,6 +23,7 @@ Added tests:
 4. `testFuzz_differential_addLiquidity_matches_model_and_bound`
 5. `testFuzz_differential_removeLiquidity_matches_model_and_bound`
 6. `testFuzz_stateful_differential_mixed_operations`
+7. `testFuzz_tokenized_multiStep_reserveSync`
 
 What is checked:
 - Exact match with an independent integer reference model for swap outputs and post-state reserves.
@@ -29,6 +32,8 @@ What is checked:
 - Lean-style floor bounds for LP minting and reserve withdrawals: floor result stays within `(exact - 1, exact]`.
 - Multi-step swap sequence consistency and reserve positivity.
 - Mixed-operation stateful consistency (add/remove/swap) against a shadow model over several fuzzed steps.
+- Reserve accounting equality with actual ERC20 balances in an ERC20-backed CPAMM variant.
+- Rejection of fee-on-transfer token inputs for exact-accounting paths.
 
 Run:
 
@@ -38,7 +43,7 @@ cd solidity
 ```
 
 Status:
-- Pass (`19/19` tests total across the project, including 4 multi-actor invariant tests).
+- Pass (`25/25` tests total across the project, including 4 multi-actor invariant tests and 6 ERC20-backed integration tests).
 
 ## External Tooling: Slither
 

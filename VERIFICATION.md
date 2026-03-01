@@ -67,6 +67,7 @@ From `CPAMM/Rounding.lean`:
 ## External Validation
 
 - Foundry test suites include baseline unit/fuzz tests plus differential shadow-model fuzzing for swap/add/remove and mixed-operation traces (`solidity/test/CPAMM*.t.sol`).
+- ERC20-backed integration tests (`solidity/test/CPAMM.Tokenized.t.sol`) validate reserve/token-balance consistency for add/remove/swaps and reject fee-on-transfer inputs.
 - Security static analysis is run via `scripts/security/slither.sh` in fail-on-findings mode, with one explicitly triaged exclusion (`divide-before-multiply`).
 - CI (`.github/workflows/ci.yml`) runs three gates on push/PR:
   - Lean build
@@ -82,6 +83,7 @@ From `CPAMM/Rounding.lean`:
 - Solidity fee denominator is strictly positive (`h_denom_pos`).
 - Solidity/refinement remove-liquidity theorems assume nontrivial liquidity actions (`dL < totalSupply`) to keep post-state reserves positive (matching contract behavior).
 - The full-withdrawal boundary (`dL = L`) is handled as an abstract terminal-close theorem, not a Solidity-refinement path.
+- The ERC20-backed extension (`CPAMMTokenized.sol`) is currently outside the Lean refinement theorem set; it is covered by Foundry integration tests.
 
 ## Non-goals
 

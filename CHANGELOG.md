@@ -13,11 +13,17 @@ All notable changes to this project are documented in this file.
   - `terminal_preserved_removeLiquidityTerminal`
   - `validOrTerminal_preserved_removeLiquidityBoundary`
 - Solidity unit test `test_removeLiquidity_fullWithdraw_reverts` to lock current contract behavior (`shares < totalSupply`).
+- ERC20-backed CPAMM extension contract: `solidity/src/CPAMMTokenized.sol`.
+- ERC20-backed integration suite: `solidity/test/CPAMM.Tokenized.t.sol`:
+  - reserve/token-balance sync checks across add/remove/swaps
+  - fee-on-transfer rejection path
+  - multi-step fuzzed sequence with proportional add step generation
 
 ### Changed
 - Verification and audit docs now explicitly distinguish:
   - Solidity/refinement path (`dL < totalSupply`)
   - Abstract terminal-close boundary (`dL = L`)
+- Security validation report now records `25/25` passing tests (including tokenized integration coverage).
 
 ## v1.4.1 - 2026-03-01
 
