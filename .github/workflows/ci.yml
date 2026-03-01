@@ -175,6 +175,7 @@ jobs:
             --kpi strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv \
             --deal-input strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json \
             --portal-input strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json \
+            --case-study-input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json \
             2>&1 | tee artifacts/strategy-data-validation.log
       - name: Strategy tooling tests
         run: |
@@ -228,6 +229,7 @@ jobs:
             --kpi strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv \
             --deal-input strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json \
             --portal-input strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json \
+            --case-study-input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json \
             --as-of 2026-03-01 \
             --out-dir artifacts/commercial-review-package
       - name: Commercial package summary

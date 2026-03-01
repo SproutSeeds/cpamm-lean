@@ -1,0 +1,62 @@
+{
+  "case_study_id": "amm-launch-readiness-2026q1",
+  "published_date": "2026-03-01",
+  "title": "AMM Launch Readiness: Proof + Test + Security Gate Hardening",
+  "client_alias": "Protocol Alpha (anonymized)",
+  "client_segment": "protocol",
+  "engagement_type": "verification_sprint",
+  "engagement_window": {
+    "start": "2026-01-15",
+    "end": "2026-02-12"
+  },
+  "scope_summary": [
+    "Closed theorem and simulation gaps in the AMM proof chain.",
+    "Extended differential fuzzing and invariant campaign depth.",
+    "Pinned toolchain versions and stabilized release-gate CI artifacts."
+  ],
+  "baseline_risks": [
+    "Inconsistent release evidence across formal, test, and static-analysis layers.",
+    "High probability of launch delay due to unresolved refinement assumptions.",
+    "Weak reviewer confidence from non-reproducible build and security outputs."
+  ],
+  "interventions": [
+    "Implemented floor-bounded refinement proofs with explicit assumptions.",
+    "Added two-actor invariant harness and mixed-operation stateful fuzzing.",
+    "Introduced reproducible reviewer/commercial package generation with checksums."
+  ],
+  "outcomes": [
+    "Client moved from ad-hoc validation to repeatable release evidence.",
+    "Audit and launch-readiness conversations accelerated with artifact-backed claims.",
+    "Post-sprint conversion path opened for retainer ownership of release gates."
+  ],
+  "metrics": {
+    "critical_findings_prevented": 3,
+    "proof_obligations_closed": 7,
+    "ci_gate_pass_rate_before_pct": 62,
+    "ci_gate_pass_rate_after_pct": 98,
+    "time_to_green_before_days": 9,
+    "time_to_green_after_days": 2,
+    "regression_escapes_before": 2,
+    "regression_escapes_after": 0
+  },
+  "artifacts_referenced": [
+    "review-package",
+    "commercial-review-package",
+    "evidence-portal"
+  ],
+  "anonymization_notes": [
+    "Protocol and stakeholder names replaced with aliases.",
+    "No private code or infrastructure details included.",
+    "Metrics rounded where needed to avoid deanonymization."
+  ],
+  "quote": {
+    "speaker_role": "CTO (anonymized)",
+    "text": "The integrated proof/test/security package gave us launch confidence and shortened review cycles."
+  },
+  "tags": [
+    "amm",
+    "formal-verification",
+    "release-gates",
+    "de-fi-security"
+  ]
+}

@@ -19,6 +19,11 @@ These are operational templates for running the commercialization plan.
 - `contracts/SOW_TEMPLATE.md`
 - `contracts/ACCEPTANCE_CRITERIA_TEMPLATE.md`
 
+## Case Studies
+
+- `case-studies/CASE_STUDY_INPUT_TEMPLATE.json`
+- `case-studies/README.md`
+
 ## Portal
 
 - `portal/PORTAL_INPUT_TEMPLATE.json`
@@ -96,7 +101,18 @@ python3 scripts/validate_strategy_data.py \
   --pipeline strategy/private/PIPELINE.csv \
   --kpi strategy/private/KPI_TRACKER.csv \
   --deal-input strategy/private/deals/example.json \
-  --portal-input strategy/private/portals/example.json
+  --portal-input strategy/private/portals/example.json \
+  --case-study-input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json
+```
+
+Generate a sanitized case-study package:
+
+```bash
+mkdir -p strategy/private/case-studies
+cp strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json strategy/private/case-studies/example.json
+
+python3 scripts/case_study_pack.py \
+  --input strategy/private/case-studies/example.json
 ```
 
 Generate a single commercialization review bundle:
@@ -107,6 +123,7 @@ Generate a single commercialization review bundle:
   --kpi strategy/private/KPI_TRACKER.csv \
   --deal-input strategy/private/deals/example.json \
   --portal-input strategy/private/portals/example.json \
+  --case-study-input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json \
   --as-of 2026-03-01
 ```
 
@@ -143,6 +160,7 @@ Commercial package CI artifact:
 - Builds a sanitized commercialization bundle from template data each push/PR.
 - Publishes artifact names: `commercial-review-package` directory and tarball.
 - Includes outbound execution artifacts (`OUTBOUND_FOCUS.md`, `OUTBOUND_FOCUS.csv`, `OUTBOUND_SLA.md`, `OUTBOUND_SLA.json`).
+- Includes sanitized `case-study/` output when a case-study input is provided.
 
 Evidence portal publish automation:
 

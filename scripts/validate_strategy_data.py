@@ -10,6 +10,7 @@ import re
 from datetime import date
 from pathlib import Path
 
+import case_study_pack
 import deal_pack
 
 PIPELINE_REQUIRED_COLUMNS = [
@@ -84,6 +85,15 @@ PORTAL_REQUIRED_FIELDS = [
     "engagement_type",
     "status",
     "owner",
+]
+
+CASE_STUDY_REQUIRED_FIELDS = [
+    "case_study_id",
+    "published_date",
+    "title",
+    "client_alias",
+    "client_segment",
+    "engagement_type",
 ]
 
 
@@ -327,12 +337,109 @@ def validate_portal_input(path: Path) -> None:
                 raise ValidationError(f"{path}: milestone #{idx} date must be YYYY-MM-DD, got {date_raw!r}")
 
 
+def validate_case_study_input(path: Path) -> None:
+    if not path.exists():
+        raise ValidationError(f"missing file: {path}")
+    with path.open(encoding="utf-8") as handle:
+        try:
+            data = json.load(handle)
+        except json.JSONDecodeError as exc:
+            raise ValidationError(f"{path} invalid JSON: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValidationError(f"{path}: root must be a JSON object")
+
+    for key in CASE_STUDY_REQUIRED_FIELDS:
+        value = str(data.get(key, "")).strip()
+        if not value:
+            raise ValidationError(f"{path}: missing required field {key!r}")
+
+    case_study_id = str(data.get("case_study_id", "")).strip()
+    if case_study_pack.slugify(case_study_id) != case_study_id:
+        raise ValidationError(
+            f"{path}: case_study_id must be slug-like (letters/numbers/._-), got {case_study_id!r}"
+        )
+
+    published_date = str(data.get("published_date", "")).strip()
+    if parse_date(published_date) is None:
+        raise ValidationError(f"{path}: published_date must be YYYY-MM-DD, got {published_date!r}")
+
+    engagement_window = data.get("engagement_window", {})
+    if engagement_window is not None and not isinstance(engagement_window, dict):
+        raise ValidationError(f"{path}: field 'engagement_window' must be an object")
+    if isinstance(engagement_window, dict):
+        start = str(engagement_window.get("start", "")).strip()
+        end = str(engagement_window.get("end", "")).strip()
+        start_date = parse_date(start) if start else None
+        end_date = parse_date(end) if end else None
+        if start and start_date is None:
+            raise ValidationError(f"{path}: engagement_window.start must be YYYY-MM-DD, got {start!r}")
+        if end and end_date is None:
+            raise ValidationError(f"{path}: engagement_window.end must be YYYY-MM-DD, got {end!r}")
+        if start_date is not None and end_date is not None and start_date > end_date:
+            raise ValidationError(f"{path}: engagement_window must satisfy start <= end")
+
+    list_fields = [
+        "scope_summary",
+        "baseline_risks",
+        "interventions",
+        "outcomes",
+        "artifacts_referenced",
+        "anonymization_notes",
+        "tags",
+    ]
+    for field_name in list_fields:
+        value = data.get(field_name, [])
+        if value is not None and not isinstance(value, list):
+            raise ValidationError(f"{path}: field {field_name!r} must be a list")
+
+    metrics = data.get("metrics", {})
+    if not isinstance(metrics, dict):
+        raise ValidationError(f"{path}: field 'metrics' must be an object")
+    required_metrics = [
+        "critical_findings_prevented",
+        "proof_obligations_closed",
+        "ci_gate_pass_rate_before_pct",
+        "ci_gate_pass_rate_after_pct",
+        "time_to_green_before_days",
+        "time_to_green_after_days",
+        "regression_escapes_before",
+        "regression_escapes_after",
+    ]
+    missing_metrics = [key for key in required_metrics if key not in metrics]
+    if missing_metrics:
+        raise ValidationError(f"{path}: metrics missing required fields: {', '.join(missing_metrics)}")
+
+    for key in required_metrics:
+        value = metrics.get(key, None)
+        try:
+            num = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError(f"{path}: metrics.{key} must be numeric, got {value!r}") from exc
+        if num < 0:
+            raise ValidationError(f"{path}: metrics.{key} must be >= 0, got {num}")
+
+    for key in ["ci_gate_pass_rate_before_pct", "ci_gate_pass_rate_after_pct"]:
+        num = float(metrics.get(key))
+        if num < 0 or num > 100:
+            raise ValidationError(f"{path}: metrics.{key} must be in [0, 100], got {num}")
+
+    quote = data.get("quote", {})
+    if quote is not None and not isinstance(quote, dict):
+        raise ValidationError(f"{path}: field 'quote' must be an object")
+    if isinstance(quote, dict) and quote:
+        speaker_role = str(quote.get("speaker_role", "")).strip()
+        text = str(quote.get("text", "")).strip()
+        if text and not speaker_role:
+            raise ValidationError(f"{path}: quote.speaker_role is required when quote.text is set")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pipeline", type=Path, help="Path to pipeline CSV.")
     parser.add_argument("--kpi", type=Path, help="Path to KPI tracker CSV.")
     parser.add_argument("--deal-input", type=Path, help="Path to deal input JSON.")
     parser.add_argument("--portal-input", type=Path, help="Path to evidence portal input JSON.")
+    parser.add_argument("--case-study-input", type=Path, help="Path to case-study input JSON.")
     parser.add_argument(
         "--contracts-dir",
         type=Path,
@@ -344,8 +451,16 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    if args.pipeline is None and args.kpi is None and args.deal_input is None and args.portal_input is None:
-        raise ValidationError("provide at least one of: --pipeline, --kpi, --deal-input, --portal-input")
+    if (
+        args.pipeline is None
+        and args.kpi is None
+        and args.deal_input is None
+        and args.portal_input is None
+        and args.case_study_input is None
+    ):
+        raise ValidationError(
+            "provide at least one of: --pipeline, --kpi, --deal-input, --portal-input, --case-study-input"
+        )
 
     validated: list[str] = []
     if args.pipeline is not None:
@@ -360,6 +475,9 @@ def main() -> int:
     if args.portal_input is not None:
         validate_portal_input(args.portal_input)
         validated.append(f"portal_input={args.portal_input}")
+    if args.case_study_input is not None:
+        validate_case_study_input(args.case_study_input)
+        validated.append(f"case_study_input={args.case_study_input}")
 
     print("strategy data validation passed:")
     for item in validated:

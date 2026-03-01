@@ -197,6 +197,8 @@ class StrategyToolingTests(unittest.TestCase):
                 "strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json",
                 "--portal-input",
                 "strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json",
+                "--case-study-input",
+                "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json",
             ]
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
@@ -280,6 +282,71 @@ class StrategyToolingTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("engagement_id must be slug-like", result.stdout)
+
+    def test_validate_strategy_data_rejects_bad_case_study_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            bad_case_study = Path(tmp_dir) / "CASE_STUDY_BAD.json"
+            payload = json.loads(
+                (ROOT / "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json").read_text(encoding="utf-8")
+            )
+            payload["case_study_id"] = "bad id with spaces"
+            bad_case_study.write_text(json.dumps(payload), encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/validate_strategy_data.py",
+                    "--case-study-input",
+                    str(bad_case_study),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("case_study_id must be slug-like", result.stdout)
+
+    def test_case_study_pack_generates_expected_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out_dir = Path(tmp_dir) / "case-study"
+            input_json = ROOT / "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json"
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/case_study_pack.py",
+                    "--input",
+                    str(input_json),
+                    "--out-dir",
+                    str(out_dir),
+                ]
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertTrue((out_dir / "CASE_STUDY.md").exists())
+            self.assertTrue((out_dir / "CASE_STUDY_SUMMARY.json").exists())
+            self.assertTrue((out_dir / "MANIFEST.json").exists())
+
+            text = (out_dir / "CASE_STUDY.md").read_text(encoding="utf-8")
+            self.assertIn("AMM Launch Readiness", text)
+            self.assertIn("Measurable Outcomes", text)
+
+    def test_case_study_pack_rejects_bad_case_study_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            bad_input = Path(tmp_dir) / "bad-case-study.json"
+            payload = json.loads(
+                (ROOT / "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json").read_text(encoding="utf-8")
+            )
+            payload["case_study_id"] = "bad id"
+            bad_input.write_text(json.dumps(payload), encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/case_study_pack.py",
+                    "--input",
+                    str(bad_input),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("case_study_id must be slug-like", result.stdout)
 
     def test_deal_pack_generates_expected_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -554,6 +621,31 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             self.assertTrue((out_dir / "evidence-portal/INDEX.md").exists())
             self.assertTrue((out_dir / "evidence-portal/ARTIFACTS.md").exists())
+
+    def test_commercial_review_package_with_case_study(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out_dir = Path(tmp_dir) / "commercial-package"
+
+            result = run_cmd(
+                [
+                    "bash",
+                    "scripts/commercial_review_package.sh",
+                    "--pipeline",
+                    "strategy/assets/crm/PIPELINE_TEMPLATE.csv",
+                    "--kpi",
+                    "strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv",
+                    "--case-study-input",
+                    "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json",
+                    "--as-of",
+                    "2026-03-01",
+                    "--out-dir",
+                    str(out_dir),
+                ]
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertTrue((out_dir / "case-study/CASE_STUDY.md").exists())
+            self.assertTrue((out_dir / "case-study/CASE_STUDY_SUMMARY.json").exists())
 
 
 if __name__ == "__main__":

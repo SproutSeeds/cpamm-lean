@@ -9,6 +9,7 @@ PIPELINE_PATH="${ROOT_DIR}/strategy/private/PIPELINE.csv"
 KPI_PATH="${ROOT_DIR}/strategy/private/KPI_TRACKER.csv"
 DEAL_INPUT_PATH=""
 PORTAL_INPUT_PATH=""
+CASE_STUDY_INPUT_PATH=""
 PORTAL_DIR=""
 AS_OF_DATE="$(date -u +%F)"
 
@@ -22,6 +23,8 @@ Options:
   --kpi <path>          KPI CSV (default: strategy/private/KPI_TRACKER.csv)
   --deal-input <path>   Optional deal JSON for proposal/SOW generation
   --portal-input <path> Optional portal JSON for evidence portal generation
+  --case-study-input <path>
+                        Optional case-study JSON for sanitized case-study package generation
   --portal-dir <path>   Optional portal output directory (default: <out>/evidence-portal)
   --as-of <YYYY-MM-DD>  Snapshot date for pipeline health (default: today UTC)
   --out-dir <path>      Output directory (default: artifacts/commercial-review-package-<utcstamp>)
@@ -54,6 +57,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --portal-input)
       PORTAL_INPUT_PATH="$(make_abs "$2")"
+      shift 2
+      ;;
+    --case-study-input)
+      CASE_STUDY_INPUT_PATH="$(make_abs "$2")"
       shift 2
       ;;
     --portal-dir)
@@ -105,6 +112,11 @@ if [[ -n "$PORTAL_INPUT_PATH" && ! -f "$PORTAL_INPUT_PATH" ]]; then
   exit 1
 fi
 
+if [[ -n "$CASE_STUDY_INPUT_PATH" && ! -f "$CASE_STUDY_INPUT_PATH" ]]; then
+  echo "error: missing case-study input JSON: $CASE_STUDY_INPUT_PATH" >&2
+  exit 1
+fi
+
 mkdir -p "$OUT_DIR"
 
 echo "==> output: $OUT_DIR"
@@ -118,6 +130,9 @@ if [[ -n "$DEAL_INPUT_PATH" ]]; then
 fi
 if [[ -n "$PORTAL_INPUT_PATH" ]]; then
   VALIDATE_ARGS+=("--portal-input" "$PORTAL_INPUT_PATH")
+fi
+if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then
+  VALIDATE_ARGS+=("--case-study-input" "$CASE_STUDY_INPUT_PATH")
 fi
 python3 "$ROOT_DIR/scripts/validate_strategy_data.py" "${VALIDATE_ARGS[@]}" \
   | tee "$OUT_DIR/strategy-data-validation.log"
@@ -147,6 +162,13 @@ python3 "$ROOT_DIR/scripts/outbound_sla_gate.py" \
   --as-of "$AS_OF_DATE" \
   --out "$OUT_DIR/OUTBOUND_SLA.md" \
   --json-out "$OUT_DIR/OUTBOUND_SLA.json"
+
+if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then
+  echo "==> case study pack"
+  python3 "$ROOT_DIR/scripts/case_study_pack.py" \
+    --input "$CASE_STUDY_INPUT_PATH" \
+    --out-dir "$OUT_DIR/case-study"
+fi
 
 if [[ -n "$DEAL_INPUT_PATH" ]]; then
   echo "==> deal pack"
@@ -187,21 +209,27 @@ GIT_STATUS="$(git -C "$ROOT_DIR" status --short || true)"
   if [[ -n "$DEAL_INPUT_PATH" ]]; then
     echo "deal_input_source=$DEAL_INPUT_PATH"
   fi
+  if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then
+    echo "case_study_input_source=$CASE_STUDY_INPUT_PATH"
+  fi
 } > "$OUT_DIR/versions.txt"
 
 {
   echo "# Commands executed by scripts/commercial_review_package.sh"
   echo ""
-  echo "1. python3 scripts/validate_strategy_data.py --pipeline <pipeline> --kpi <kpi> [--deal-input <deal-json>]"
-  echo "2. python3 scripts/strategy_dashboard.py --pipeline <pipeline> --kpi <kpi> --out <out>/WEEKLY_DASHBOARD.md"
-  echo "3. python3 scripts/pipeline_health.py --pipeline <pipeline> --as-of <date> --out <out>/PIPELINE_HEALTH.md"
-  echo "4. python3 scripts/outbound_focus.py --pipeline <pipeline> --as-of <date> --out <out>/OUTBOUND_FOCUS.md --csv-out <out>/OUTBOUND_FOCUS.csv"
-  echo "5. python3 scripts/outbound_sla_gate.py --pipeline <pipeline> --as-of <date> --out <out>/OUTBOUND_SLA.md --json-out <out>/OUTBOUND_SLA.json"
+  echo "- python3 scripts/validate_strategy_data.py --pipeline <pipeline> --kpi <kpi> [--deal-input <deal-json>] [--portal-input <portal-json>] [--case-study-input <case-study-json>]"
+  echo "- python3 scripts/strategy_dashboard.py --pipeline <pipeline> --kpi <kpi> --out <out>/WEEKLY_DASHBOARD.md"
+  echo "- python3 scripts/pipeline_health.py --pipeline <pipeline> --as-of <date> --out <out>/PIPELINE_HEALTH.md"
+  echo "- python3 scripts/outbound_focus.py --pipeline <pipeline> --as-of <date> --out <out>/OUTBOUND_FOCUS.md --csv-out <out>/OUTBOUND_FOCUS.csv"
+  echo "- python3 scripts/outbound_sla_gate.py --pipeline <pipeline> --as-of <date> --out <out>/OUTBOUND_SLA.md --json-out <out>/OUTBOUND_SLA.json"
+  if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then
+    echo "- python3 scripts/case_study_pack.py --input <case-study-json> --out-dir <out>/case-study"
+  fi
   if [[ -n "$DEAL_INPUT_PATH" ]]; then
-    echo "6. python3 scripts/deal_pack.py --input <deal-json> --out-dir <out>/deal-pack --include-acceptance-template"
+    echo "- python3 scripts/deal_pack.py --input <deal-json> --out-dir <out>/deal-pack --include-acceptance-template"
   fi
   if [[ -n "$PORTAL_INPUT_PATH" ]]; then
-    echo "7. python3 scripts/evidence_portal.py --input <portal-json> --portal-dir <dir> --commercial-package-dir <out>"
+    echo "- python3 scripts/evidence_portal.py --input <portal-json> --portal-dir <dir> --commercial-package-dir <out>"
   fi
 } > "$OUT_DIR/COMMANDS.txt"
 
@@ -218,6 +246,7 @@ Branch: $GIT_BRANCH
 - Pipeline health report: PIPELINE_HEALTH.md
 - Outbound focus queue: OUTBOUND_FOCUS.md + OUTBOUND_FOCUS.csv
 - Outbound SLA gate: OUTBOUND_SLA.md + OUTBOUND_SLA.json
+$(if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then echo "- Case-study package: case-study/"; fi)
 $(if [[ -n "$DEAL_INPUT_PATH" ]]; then echo "- Deal pack: deal-pack/"; fi)
 $(if [[ -n "$PORTAL_INPUT_PATH" ]]; then echo "- Evidence portal: ${PORTAL_DIR}"; fi)
 - Strategy data validation log: strategy-data-validation.log
@@ -251,6 +280,14 @@ if [[ -n "$DEAL_INPUT_PATH" ]]; then
     "deal-pack/MANIFEST.json"
     "deal-pack/PROPOSAL.md"
     "deal-pack/SOW.md"
+  )
+fi
+
+if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then
+  CHECKSUM_FILES+=(
+    "case-study/CASE_STUDY.md"
+    "case-study/CASE_STUDY_SUMMARY.json"
+    "case-study/MANIFEST.json"
   )
 fi
 

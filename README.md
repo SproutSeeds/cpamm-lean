@@ -59,6 +59,7 @@ Execution templates and trackers are in:
 - [`strategy/assets/crm/PIPELINE_TEMPLATE.csv`](strategy/assets/crm/PIPELINE_TEMPLATE.csv)
 - [`strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv`](strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv)
 - [`strategy/assets/ops/CADENCE_AUTOMATION_CONFIG.md`](strategy/assets/ops/CADENCE_AUTOMATION_CONFIG.md)
+- [`strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json`](strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json)
 - [`strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json`](strategy/assets/portal/PORTAL_INPUT_TEMPLATE.json)
 
 Generate weekly business dashboard from trackers:
@@ -123,7 +124,18 @@ python3 scripts/validate_strategy_data.py \
   --pipeline strategy/private/PIPELINE.csv \
   --kpi strategy/private/KPI_TRACKER.csv \
   --deal-input strategy/private/deals/example.json \
-  --portal-input strategy/private/portals/example.json
+  --portal-input strategy/private/portals/example.json \
+  --case-study-input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json
+```
+
+Generate a sanitized case-study package:
+
+```bash
+mkdir -p strategy/private/case-studies
+cp strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json strategy/private/case-studies/example.json
+
+python3 scripts/case_study_pack.py \
+  --input strategy/private/case-studies/example.json
 ```
 
 Generate a commercialization review package (dashboard + pipeline health + optional deal pack + optional portal):
@@ -134,6 +146,7 @@ Generate a commercialization review package (dashboard + pipeline health + optio
   --kpi strategy/private/KPI_TRACKER.csv \
   --deal-input strategy/private/deals/example.json \
   --portal-input strategy/private/portals/example.json \
+  --case-study-input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json \
   --as-of 2026-03-01
 ```
 
@@ -142,6 +155,7 @@ The package now includes outbound execution artifacts:
 - `OUTBOUND_FOCUS.csv`
 - `OUTBOUND_SLA.md`
 - `OUTBOUND_SLA.json`
+and optional `case-study/` output when `--case-study-input` is provided.
 
 This writes a verifiable bundle under `artifacts/commercial-review-package-<utcstamp>/`
 plus a `.tar.gz` archive.
