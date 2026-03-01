@@ -118,6 +118,12 @@ Operating cadence issue templates are now included in:
 - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`
 - `.github/ISSUE_TEMPLATE/risk-register-review.md`
 
+Recurring cadence issue creation is automated in:
+- `.github/workflows/operating-cadence.yml`
+- Weekly KPI issue schedule: Mondays `14:00 UTC`
+- Monthly risk issue schedule: day `1` at `15:00 UTC`
+- Manual runs are supported via `workflow_dispatch` with optional `reference_date`.
+
 ## Security Validation
 
 Run differential fuzzing + baseline test suite:

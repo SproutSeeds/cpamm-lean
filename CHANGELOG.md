@@ -21,8 +21,10 @@ All notable changes to this project are documented in this file.
 - Added `scripts/pipeline_health.py` to score funnel health and produce close-horizon forecast reports from CRM pipeline data.
 - Added `scripts/commercial_review_package.sh` to build a one-command commercialization evidence bundle (dashboard, pipeline health, optional deal pack, checksums, tarball).
 - Added `scripts/validate_strategy_data.py` with strict schema/range/date checks for pipeline CSV, KPI CSV, and deal JSON.
+- Added `scripts/create_cadence_issue.py` to create recurring KPI/risk cadence issues with label bootstrapping and duplicate-title protection.
 - Added strategy tooling regression tests in `tests/test_strategy_tooling.py`.
 - Added `strategy-tooling` CI gate checks for both strategy-data validation and script regression tests on every push/PR.
+- Added `.github/workflows/operating-cadence.yml` to auto-open weekly KPI and monthly risk review issues (plus manual dispatch support).
 - Added GitHub issue templates for execution cadence:
   - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`
   - `.github/ISSUE_TEMPLATE/risk-register-review.md`

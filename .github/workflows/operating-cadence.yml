@@ -1,0 +1,65 @@
+name: Operating Cadence
+
+on:
+  schedule:
+    # Weekly KPI review issue every Monday at 14:00 UTC.
+    - cron: "0 14 * * 1"
+    # Monthly risk register review issue on day 1 at 15:00 UTC.
+    - cron: "0 15 1 * *"
+  workflow_dispatch:
+    inputs:
+      run_kpi:
+        description: "Create weekly KPI review issue"
+        required: false
+        type: boolean
+        default: true
+      run_risk:
+        description: "Create monthly risk review issue"
+        required: false
+        type: boolean
+        default: true
+      reference_date:
+        description: "Optional YYYY-MM-DD override for issue title/date window"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  kpi-issue:
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '0 14 * * 1') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run_kpi == true || inputs.run_kpi == 'true'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Create KPI review issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_DATE: ${{ inputs.reference_date }}
+        run: |
+          args=(--kind kpi)
+          if [[ -n "$REF_DATE" ]]; then
+            args+=(--reference-date "$REF_DATE")
+          fi
+          python3 scripts/create_cadence_issue.py "${args[@]}"
+
+  risk-issue:
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '0 15 1 * *') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run_risk == true || inputs.run_risk == 'true'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Create risk review issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_DATE: ${{ inputs.reference_date }}
+        run: |
+          args=(--kind risk)
+          if [[ -n "$REF_DATE" ]]; then
+            args+=(--reference-date "$REF_DATE")
+          fi
+          python3 scripts/create_cadence_issue.py "${args[@]}"

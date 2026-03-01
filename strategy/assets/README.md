@@ -82,3 +82,9 @@ Generate a single commercialization review bundle:
 ```
 
 Default bundle output path: `artifacts/commercial-review-package-<utcstamp>/`.
+
+Cadence issue automation:
+
+- Workflow: `.github/workflows/operating-cadence.yml`
+- Uses `scripts/create_cadence_issue.py` to open recurring KPI and risk-review issues.
+- Supports manual workflow dispatch with optional `reference_date` override.

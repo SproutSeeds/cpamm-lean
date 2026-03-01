@@ -17,6 +17,57 @@ def run_cmd(args: list[str]) -> subprocess.CompletedProcess[str]:
 
 
 class StrategyToolingTests(unittest.TestCase):
+    def test_create_cadence_issue_dry_run_kpi(self) -> None:
+        result = run_cmd(
+            [
+                PYTHON,
+                "scripts/create_cadence_issue.py",
+                "--kind",
+                "kpi",
+                "--reference-date",
+                "2026-03-02",
+                "--dry-run",
+            ]
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["title"], "[KPI] Weekly Review - 2026-03-02")
+        self.assertIn("kpi-review", payload["labels"])
+        self.assertIn("Week start: 2026-03-02", payload["body"])
+
+    def test_create_cadence_issue_dry_run_risk(self) -> None:
+        result = run_cmd(
+            [
+                PYTHON,
+                "scripts/create_cadence_issue.py",
+                "--kind",
+                "risk",
+                "--reference-date",
+                "2026-03-01",
+                "--dry-run",
+            ]
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["title"], "[RISK] Register Review - 2026-03-01")
+        self.assertIn("risk-review", payload["labels"])
+        self.assertIn("Period: 2026-03-01 to 2026-03-31", payload["body"])
+
+    def test_create_cadence_issue_rejects_bad_reference_date(self) -> None:
+        result = run_cmd(
+            [
+                PYTHON,
+                "scripts/create_cadence_issue.py",
+                "--kind",
+                "kpi",
+                "--reference-date",
+                "2026-13-99",
+                "--dry-run",
+            ]
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("reference date must be YYYY-MM-DD", result.stdout)
+
     def test_validate_strategy_data_passes_templates(self) -> None:
         result = run_cmd(
             [
