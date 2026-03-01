@@ -21,7 +21,7 @@ These are operational templates for running the commercialization plan.
 
 ## Ops
 
-- `ops/KPI_TRACKER.csv`
+- `ops/KPI_TRACKER_TEMPLATE.csv`
 - `ops/WEEKLY_DASHBOARD_TEMPLATE.md`
 
 ## Automation
@@ -29,8 +29,13 @@ These are operational templates for running the commercialization plan.
 Generate a live weekly dashboard from trackers:
 
 ```bash
+# one-time setup for private working copies
+mkdir -p strategy/private
+cp strategy/assets/crm/PIPELINE_TEMPLATE.csv strategy/private/PIPELINE.csv
+cp strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv strategy/private/KPI_TRACKER.csv
+
 python3 scripts/strategy_dashboard.py \
-  --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
-  --kpi strategy/assets/ops/KPI_TRACKER.csv \
+  --pipeline strategy/private/PIPELINE.csv \
+  --kpi strategy/private/KPI_TRACKER.csv \
   --out reports/WEEKLY_DASHBOARD.md
 ```

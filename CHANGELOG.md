@@ -17,6 +17,7 @@ All notable changes to this project are documented in this file.
   - proposal, SOW, and acceptance-criteria templates
   - KPI tracker and weekly dashboard template
 - Added `scripts/strategy_dashboard.py` to generate `reports/WEEKLY_DASHBOARD.md` from CRM/KPI trackers.
+- Hardened `.gitignore` for private commercialization data (`strategy/private/*`, live CRM/KPI files, and generated weekly dashboards).
 
 ## v1.5.0 - 2026-03-01
 

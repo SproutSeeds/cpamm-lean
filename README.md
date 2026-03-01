@@ -56,14 +56,18 @@ Execution templates and trackers are in:
 - [`strategy/assets/README.md`](strategy/assets/README.md)
 - [`strategy/assets/crm/CRM_SCHEMA.md`](strategy/assets/crm/CRM_SCHEMA.md)
 - [`strategy/assets/crm/PIPELINE_TEMPLATE.csv`](strategy/assets/crm/PIPELINE_TEMPLATE.csv)
-- [`strategy/assets/ops/KPI_TRACKER.csv`](strategy/assets/ops/KPI_TRACKER.csv)
+- [`strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv`](strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv)
 
 Generate weekly business dashboard from trackers:
 
 ```bash
+mkdir -p strategy/private
+cp strategy/assets/crm/PIPELINE_TEMPLATE.csv strategy/private/PIPELINE.csv
+cp strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv strategy/private/KPI_TRACKER.csv
+
 python3 scripts/strategy_dashboard.py \
-  --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
-  --kpi strategy/assets/ops/KPI_TRACKER.csv \
+  --pipeline strategy/private/PIPELINE.csv \
+  --kpi strategy/private/KPI_TRACKER.csv \
   --out reports/WEEKLY_DASHBOARD.md
 ```
 

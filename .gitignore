@@ -2,3 +2,22 @@
 .venv-security/
 solidity/lcov.info
 artifacts/
+
+# Local secrets / credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Private commercialization operating data
+strategy/private/
+strategy/assets/**/*.local.csv
+strategy/assets/**/*.local.md
+strategy/assets/crm/PIPELINE.csv
+strategy/assets/crm/PIPELINE_PRIVATE.csv
+strategy/assets/ops/KPI_TRACKER.csv
+strategy/assets/ops/KPI_TRACKER_PRIVATE.csv
+reports/WEEKLY_DASHBOARD.md
+reports/WEEKLY_DASHBOARD_PRIVATE.md
