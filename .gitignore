@@ -30,3 +30,7 @@ reports/OUTBOUND_SLA.json
 reports/OUTBOUND_*_PRIVATE.md
 reports/OUTBOUND_*_PRIVATE.csv
 reports/OUTBOUND_*_PRIVATE.json
+reports/CASE_STUDIES_INDEX.md
+reports/CASE_STUDIES_ROLLUP.json
+reports/CASE_STUDIES_*_PRIVATE.md
+reports/CASE_STUDIES_*_PRIVATE.json

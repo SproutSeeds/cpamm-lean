@@ -181,6 +181,14 @@ jobs:
         run: |
           set -o pipefail
           python3 -m unittest discover -s tests -p "test_*.py" -v 2>&1 | tee artifacts/strategy-tooling.log
+      - name: Case-study index (template data)
+        run: |
+          set -o pipefail
+          python3 scripts/case_study_index.py \
+            --inputs strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json \
+            --out artifacts/case-studies-index.md \
+            --json-out artifacts/case-studies-rollup.json \
+            2>&1 | tee artifacts/case-study-index.log
       - name: Outbound SLA gate (template data)
         run: |
           set -o pipefail
@@ -208,6 +216,9 @@ jobs:
           path: |
             artifacts/strategy-data-validation.log
             artifacts/strategy-tooling.log
+            artifacts/case-study-index.log
+            artifacts/case-studies-index.md
+            artifacts/case-studies-rollup.json
             artifacts/outbound-sla.log
             artifacts/outbound-sla.md
             artifacts/outbound-sla.json

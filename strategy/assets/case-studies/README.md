@@ -9,6 +9,15 @@ python3 scripts/case_study_pack.py \
   --input strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json
 ```
 
+Generate a cross-case-study index and rollup:
+
+```bash
+python3 scripts/case_study_index.py \
+  --inputs strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json \
+  --out reports/CASE_STUDIES_INDEX.md \
+  --json-out reports/CASE_STUDIES_ROLLUP.json
+```
+
 Default output path:
 
 - `strategy/private/case-studies/<case_study_id>/`
@@ -18,3 +27,8 @@ Generated files:
 - `CASE_STUDY.md`
 - `CASE_STUDY_SUMMARY.json`
 - `MANIFEST.json`
+
+Index outputs:
+
+- `CASE_STUDIES_INDEX.md`
+- `CASE_STUDIES_ROLLUP.json`

@@ -115,6 +115,15 @@ python3 scripts/case_study_pack.py \
   --input strategy/private/case-studies/example.json
 ```
 
+Generate a case-study portfolio index:
+
+```bash
+python3 scripts/case_study_index.py \
+  --inputs strategy/private/case-studies/example.json \
+  --out reports/CASE_STUDIES_INDEX.md \
+  --json-out reports/CASE_STUDIES_ROLLUP.json
+```
+
 Generate a single commercialization review bundle:
 
 ```bash
@@ -161,9 +170,16 @@ Commercial package CI artifact:
 - Publishes artifact names: `commercial-review-package` directory and tarball.
 - Includes outbound execution artifacts (`OUTBOUND_FOCUS.md`, `OUTBOUND_FOCUS.csv`, `OUTBOUND_SLA.md`, `OUTBOUND_SLA.json`).
 - Includes sanitized `case-study/` output when a case-study input is provided.
+- Includes case-study portfolio artifacts (`CASE_STUDIES_INDEX.md`, `CASE_STUDIES_ROLLUP.json`) when a case-study input is provided.
 
 Evidence portal publish automation:
 
 - Workflow: `.github/workflows/evidence-portal-publish.yml`
 - Weekly scheduled refresh plus manual dispatch.
 - Publishes `evidence-portal` artifact, and optional linked commercial package artifact outputs.
+
+Case-study publish automation:
+
+- Workflow: `.github/workflows/case-study-publish.yml`
+- Weekly scheduled refresh plus manual dispatch.
+- Publishes `case-study-publish` artifact with case-study package + index rollup.

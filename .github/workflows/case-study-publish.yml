@@ -1,0 +1,99 @@
+name: Case Study Publish
+
+on:
+  schedule:
+    # Weekly sanitized case-study artifact refresh.
+    - cron: "0 17 * * 1"
+  workflow_dispatch:
+    inputs:
+      case_study_input_path:
+        description: "Case-study input JSON path"
+        required: false
+        type: string
+        default: "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json"
+      include_commercial_package:
+        description: "Build commercial package and include it in publication artifacts"
+        required: false
+        type: boolean
+        default: true
+      as_of_date:
+        description: "As-of date (YYYY-MM-DD) for optional commercial package build"
+        required: false
+        type: string
+        default: "2026-03-01"
+
+permissions:
+  contents: read
+
+jobs:
+  publish-case-study:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - run: mkdir -p artifacts
+      - name: Prepare case-study input config
+        env:
+          INPUT_PATH: ${{ inputs.case_study_input_path }}
+        run: |
+          if [[ -z "$INPUT_PATH" ]]; then
+            INPUT_PATH="strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json"
+          fi
+          echo "CASE_STUDY_INPUT_PATH=$INPUT_PATH" >> "$GITHUB_ENV"
+      - name: Validate case-study input
+        run: |
+          python3 scripts/validate_strategy_data.py --case-study-input "$CASE_STUDY_INPUT_PATH"
+      - name: Build case-study package
+        run: |
+          python3 scripts/case_study_pack.py \
+            --input "$CASE_STUDY_INPUT_PATH" \
+            --out-dir artifacts/case-study
+      - name: Build case-study index and rollup
+        run: |
+          python3 scripts/case_study_index.py \
+            --inputs "$CASE_STUDY_INPUT_PATH" \
+            --out artifacts/CASE_STUDIES_INDEX.md \
+            --json-out artifacts/CASE_STUDIES_ROLLUP.json
+      - name: Build commercial package (optional)
+        if: ${{ github.event_name == 'schedule' || inputs.include_commercial_package == true || inputs.include_commercial_package == 'true' }}
+        env:
+          AS_OF_DATE: ${{ inputs.as_of_date }}
+        run: |
+          if [[ -z "$AS_OF_DATE" ]]; then
+            AS_OF_DATE="2026-03-01"
+          fi
+          ./scripts/commercial_review_package.sh \
+            --pipeline strategy/assets/crm/PIPELINE_TEMPLATE.csv \
+            --kpi strategy/assets/ops/KPI_TRACKER_TEMPLATE.csv \
+            --case-study-input "$CASE_STUDY_INPUT_PATH" \
+            --as-of "$AS_OF_DATE" \
+            --out-dir artifacts/commercial-review-package
+      - name: Case-study publish summary
+        run: |
+          {
+            echo "## Case Study Publish"
+            echo ""
+            echo "Generated artifacts:"
+            echo "- \`artifacts/case-study\`"
+            echo "- \`artifacts/CASE_STUDIES_INDEX.md\`"
+            echo "- \`artifacts/CASE_STUDIES_ROLLUP.json\`"
+            if [[ -d artifacts/commercial-review-package ]]; then
+              echo "- \`artifacts/commercial-review-package\`"
+              echo "- \`artifacts/commercial-review-package.tar.gz\`"
+            fi
+            echo ""
+            tail -n 30 artifacts/case-study/CASE_STUDY.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: case-study-publish
+          path: |
+            artifacts/case-study
+            artifacts/CASE_STUDIES_INDEX.md
+            artifacts/CASE_STUDIES_ROLLUP.json
+            artifacts/commercial-review-package
+            artifacts/commercial-review-package.tar.gz
+          if-no-files-found: warn

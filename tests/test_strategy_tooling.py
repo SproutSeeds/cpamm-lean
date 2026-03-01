@@ -348,6 +348,69 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("case_study_id must be slug-like", result.stdout)
 
+    def test_case_study_index_generates_rollup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            work = Path(tmp_dir)
+            input_a = work / "case-a.json"
+            input_b = work / "case-b.json"
+            out_md = work / "CASE_STUDIES_INDEX.md"
+            out_json = work / "CASE_STUDIES_ROLLUP.json"
+
+            payload = json.loads(
+                (ROOT / "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json").read_text(encoding="utf-8")
+            )
+            input_a.write_text(json.dumps(payload), encoding="utf-8")
+
+            payload_b = dict(payload)
+            payload_b["case_study_id"] = "amm-launch-readiness-2026q2"
+            payload_b["published_date"] = "2026-04-01"
+            payload_b["metrics"] = dict(payload["metrics"])
+            payload_b["metrics"]["critical_findings_prevented"] = 5
+            payload_b["metrics"]["proof_obligations_closed"] = 9
+            input_b.write_text(json.dumps(payload_b), encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/case_study_index.py",
+                    "--inputs",
+                    str(input_a),
+                    str(input_b),
+                    "--out",
+                    str(out_md),
+                    "--json-out",
+                    str(out_json),
+                ]
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertTrue(out_md.exists())
+            self.assertTrue(out_json.exists())
+            self.assertIn("# Case Studies Index", out_md.read_text(encoding="utf-8"))
+            self.assertIn("amm-launch-readiness-2026q2", out_md.read_text(encoding="utf-8"))
+
+            rollup = json.loads(out_json.read_text(encoding="utf-8"))
+            self.assertEqual(rollup["rollup"]["case_study_count"], 2)
+
+    def test_case_study_index_rejects_missing_metrics(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            bad_input = Path(tmp_dir) / "bad-case-study.json"
+            payload = json.loads(
+                (ROOT / "strategy/assets/case-studies/CASE_STUDY_INPUT_TEMPLATE.json").read_text(encoding="utf-8")
+            )
+            payload["metrics"].pop("proof_obligations_closed", None)
+            bad_input.write_text(json.dumps(payload), encoding="utf-8")
+
+            result = run_cmd(
+                [
+                    PYTHON,
+                    "scripts/case_study_index.py",
+                    "--inputs",
+                    str(bad_input),
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("metrics missing required fields", result.stdout)
+
     def test_deal_pack_generates_expected_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             out_dir = Path(tmp_dir) / "deal-pack"
@@ -646,6 +709,8 @@ class StrategyToolingTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             self.assertTrue((out_dir / "case-study/CASE_STUDY.md").exists())
             self.assertTrue((out_dir / "case-study/CASE_STUDY_SUMMARY.json").exists())
+            self.assertTrue((out_dir / "CASE_STUDIES_INDEX.md").exists())
+            self.assertTrue((out_dir / "CASE_STUDIES_ROLLUP.json").exists())
 
 
 if __name__ == "__main__":

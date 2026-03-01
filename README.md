@@ -138,6 +138,15 @@ python3 scripts/case_study_pack.py \
   --input strategy/private/case-studies/example.json
 ```
 
+Generate a portfolio case-study index + rollup:
+
+```bash
+python3 scripts/case_study_index.py \
+  --inputs strategy/private/case-studies/example.json \
+  --out reports/CASE_STUDIES_INDEX.md \
+  --json-out reports/CASE_STUDIES_ROLLUP.json
+```
+
 Generate a commercialization review package (dashboard + pipeline health + optional deal pack + optional portal):
 
 ```bash
@@ -156,6 +165,9 @@ The package now includes outbound execution artifacts:
 - `OUTBOUND_SLA.md`
 - `OUTBOUND_SLA.json`
 and optional `case-study/` output when `--case-study-input` is provided.
+When case-study input is provided, it also includes:
+- `CASE_STUDIES_INDEX.md`
+- `CASE_STUDIES_ROLLUP.json`
 
 This writes a verifiable bundle under `artifacts/commercial-review-package-<utcstamp>/`
 plus a `.tar.gz` archive.
@@ -197,6 +209,10 @@ Evidence portal publishing automation:
 - `.github/workflows/evidence-portal-publish.yml`
 - Weekly scheduled portal refresh and manual dispatch support.
 
+Case-study publishing automation:
+- `.github/workflows/case-study-publish.yml`
+- Weekly scheduled case-study artifact refresh and manual dispatch support.
+
 ## Security Validation
 
 Run differential fuzzing + baseline test suite:
@@ -231,6 +247,7 @@ Each CI run also publishes artifacts for review:
 - Commercial review bundle (`commercial-review-package` artifact) generated from template/synthetic operating data via `scripts/commercial_review_package.sh`
 - Outbound execution artifacts inside commercial package (`OUTBOUND_FOCUS.md`, `OUTBOUND_FOCUS.csv`, `OUTBOUND_SLA.md`, `OUTBOUND_SLA.json`)
 - Dedicated evidence portal publication artifact (`evidence-portal`) via `.github/workflows/evidence-portal-publish.yml`
+- Dedicated case-study publication artifact (`case-study-publish`) via `.github/workflows/case-study-publish.yml`
 - KPI cadence digest artifact (`kpi-outbound-digest`) via `.github/workflows/operating-cadence.yml`
 
 CI enforcement now includes:

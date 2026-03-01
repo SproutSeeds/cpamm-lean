@@ -168,6 +168,11 @@ if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then
   python3 "$ROOT_DIR/scripts/case_study_pack.py" \
     --input "$CASE_STUDY_INPUT_PATH" \
     --out-dir "$OUT_DIR/case-study"
+  echo "==> case study index"
+  python3 "$ROOT_DIR/scripts/case_study_index.py" \
+    --inputs "$CASE_STUDY_INPUT_PATH" \
+    --out "$OUT_DIR/CASE_STUDIES_INDEX.md" \
+    --json-out "$OUT_DIR/CASE_STUDIES_ROLLUP.json"
 fi
 
 if [[ -n "$DEAL_INPUT_PATH" ]]; then
@@ -224,6 +229,7 @@ GIT_STATUS="$(git -C "$ROOT_DIR" status --short || true)"
   echo "- python3 scripts/outbound_sla_gate.py --pipeline <pipeline> --as-of <date> --out <out>/OUTBOUND_SLA.md --json-out <out>/OUTBOUND_SLA.json"
   if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then
     echo "- python3 scripts/case_study_pack.py --input <case-study-json> --out-dir <out>/case-study"
+    echo "- python3 scripts/case_study_index.py --inputs <case-study-json> --out <out>/CASE_STUDIES_INDEX.md --json-out <out>/CASE_STUDIES_ROLLUP.json"
   fi
   if [[ -n "$DEAL_INPUT_PATH" ]]; then
     echo "- python3 scripts/deal_pack.py --input <deal-json> --out-dir <out>/deal-pack --include-acceptance-template"
@@ -247,6 +253,7 @@ Branch: $GIT_BRANCH
 - Outbound focus queue: OUTBOUND_FOCUS.md + OUTBOUND_FOCUS.csv
 - Outbound SLA gate: OUTBOUND_SLA.md + OUTBOUND_SLA.json
 $(if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then echo "- Case-study package: case-study/"; fi)
+$(if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then echo "- Case-study portfolio rollup: CASE_STUDIES_INDEX.md + CASE_STUDIES_ROLLUP.json"; fi)
 $(if [[ -n "$DEAL_INPUT_PATH" ]]; then echo "- Deal pack: deal-pack/"; fi)
 $(if [[ -n "$PORTAL_INPUT_PATH" ]]; then echo "- Evidence portal: ${PORTAL_DIR}"; fi)
 - Strategy data validation log: strategy-data-validation.log
@@ -285,6 +292,8 @@ fi
 
 if [[ -n "$CASE_STUDY_INPUT_PATH" ]]; then
   CHECKSUM_FILES+=(
+    "CASE_STUDIES_INDEX.md"
+    "CASE_STUDIES_ROLLUP.json"
     "case-study/CASE_STUDY.md"
     "case-study/CASE_STUDY_SUMMARY.json"
     "case-study/MANIFEST.json"
