@@ -39,3 +39,25 @@ python3 scripts/strategy_dashboard.py \
   --kpi strategy/private/KPI_TRACKER.csv \
   --out reports/WEEKLY_DASHBOARD.md
 ```
+
+Generate proposal + SOW deal docs from a structured JSON input:
+
+```bash
+mkdir -p strategy/private/deals
+cp strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json strategy/private/deals/example.json
+
+python3 scripts/deal_pack.py \
+  --input strategy/private/deals/example.json \
+  --include-acceptance-template
+```
+
+The default output is written under `strategy/private/generated/<deal_id>/`.
+
+Generate a pipeline health score and forecast report:
+
+```bash
+python3 scripts/pipeline_health.py \
+  --pipeline strategy/private/PIPELINE.csv \
+  --as-of 2026-03-01 \
+  --out reports/PIPELINE_HEALTH.md
+```

@@ -51,5 +51,5 @@ Any scope change requires written approval from both parties.
 
 ## Signatures
 
-- Provider signatory: {{name}}
-- Client signatory: {{name}}
+- Provider signatory: {{provider_signatory}}
+- Client signatory: {{client_signatory}}

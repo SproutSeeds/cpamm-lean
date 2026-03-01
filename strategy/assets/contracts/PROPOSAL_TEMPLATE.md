@@ -10,16 +10,16 @@
 ## 2. Scope
 
 1. Formal scope
-- {{formal_scope_items}}
+{{formal_scope_items}}
 
 2. Test scope
-- {{test_scope_items}}
+{{test_scope_items}}
 
 3. Security scope
-- {{security_scope_items}}
+{{security_scope_items}}
 
 4. CI and artifact scope
-- {{ci_scope_items}}
+{{ci_scope_items}}
 
 ## 3. Deliverables
 
@@ -30,13 +30,13 @@
 
 ## 4. Out-of-Scope
 
-- {{out_of_scope_items}}
+{{out_of_scope_items}}
 
 ## 5. Timeline And Milestones
 
-1. Kickoff: {{date}}
-2. Midpoint review: {{date}}
-3. Final handoff: {{date}}
+1. Kickoff: {{kickoff_date}}
+2. Midpoint review: {{midpoint_date}}
+3. Final handoff: {{handoff_date}}
 
 ## 6. Commercials
 
@@ -45,4 +45,4 @@
 
 ## 7. Acceptance Criteria
 
-- See attached `ACCEPTANCE_CRITERIA_TEMPLATE.md`.
+- See attached acceptance criteria document.

@@ -4,7 +4,6 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
-- No unreleased changes yet.
 - Added commercialization playbook docs under `strategy/`:
   - highest-EV path thesis and sequencing
   - offer/GTM model and revenue model
@@ -17,7 +16,14 @@ All notable changes to this project are documented in this file.
   - proposal, SOW, and acceptance-criteria templates
   - KPI tracker and weekly dashboard template
 - Added `scripts/strategy_dashboard.py` to generate `reports/WEEKLY_DASHBOARD.md` from CRM/KPI trackers.
-- Hardened `.gitignore` for private commercialization data (`strategy/private/*`, live CRM/KPI files, and generated weekly dashboards).
+- Added `strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json` for structured deal-pack input.
+- Added `scripts/deal_pack.py` to render proposal/SOW docs from JSON input into `strategy/private/generated/<deal_id>/`.
+- Added `scripts/pipeline_health.py` to score funnel health and produce close-horizon forecast reports from CRM pipeline data.
+- Added GitHub issue templates for execution cadence:
+  - `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`
+  - `.github/ISSUE_TEMPLATE/risk-register-review.md`
+- Hardened `.gitignore` for private commercialization data (`strategy/private/*`, live CRM/KPI files, and generated weekly/pipeline reports).
+- Updated commercialization docs with deal-pack and pipeline-health automation commands.
 
 ## v1.5.0 - 2026-03-01
 

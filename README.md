@@ -71,6 +71,31 @@ python3 scripts/strategy_dashboard.py \
   --out reports/WEEKLY_DASHBOARD.md
 ```
 
+Generate proposal/SOW deal packs from JSON input:
+
+```bash
+mkdir -p strategy/private/deals
+cp strategy/assets/contracts/DEAL_INPUT_TEMPLATE.json strategy/private/deals/example.json
+
+python3 scripts/deal_pack.py \
+  --input strategy/private/deals/example.json \
+  --include-acceptance-template
+```
+
+Default output path is `strategy/private/generated/<deal_id>/`.
+
+Generate pipeline health scoring + close-horizon forecast:
+
+```bash
+python3 scripts/pipeline_health.py \
+  --pipeline strategy/private/PIPELINE.csv \
+  --out reports/PIPELINE_HEALTH.md
+```
+
+Operating cadence issue templates are now included in:
+- `.github/ISSUE_TEMPLATE/weekly-kpi-review.md`
+- `.github/ISSUE_TEMPLATE/risk-register-review.md`
+
 ## Security Validation
 
 Run differential fuzzing + baseline test suite:

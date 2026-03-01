@@ -1,0 +1,47 @@
+{
+  "deal_id": "example-protocol-a-2026q1",
+  "proposal": {
+    "client_name": "Example Protocol A",
+    "protocol_name": "Example Protocol A",
+    "objective": "Ship a reviewer-grade verification release package before mainnet launch.",
+    "timeline": "4-week verification sprint (March 8, 2026 to April 5, 2026)",
+    "formal_scope_items": [
+      "Close agreed theorem gaps in the Lean refinement boundary.",
+      "Document proof assumptions and non-goals in VERIFICATION.md."
+    ],
+    "test_scope_items": [
+      "Extend differential fuzzing for swap/add/remove sequences.",
+      "Add invariant campaign checks for LP accounting and reserve consistency."
+    ],
+    "security_scope_items": [
+      "Run Slither with the repository detector policy and triage report.",
+      "Address actionable findings or formally document accepted risk."
+    ],
+    "ci_scope_items": [
+      "Ensure Lean/Solidity/Security CI gates pass with pinned toolchains.",
+      "Publish a review package artifact with manifest, logs, and checksums."
+    ],
+    "out_of_scope_items": [
+      "Protocol governance, oracle design, and tokenomics strategy.",
+      "New feature development unrelated to agreed verification scope."
+    ],
+    "kickoff_date": "2026-03-08",
+    "midpoint_date": "2026-03-22",
+    "handoff_date": "2026-04-05",
+    "fee": "USD 55,000 fixed fee",
+    "terms": "50% at kickoff, 50% at final handoff"
+  },
+  "sow": {
+    "provider_entity": "Sprout Seeds LLC",
+    "client_entity": "Example Protocol A Foundation",
+    "start_date": "2026-03-08",
+    "end_date": "2026-04-05",
+    "sprint_or_retainer": "Verification Sprint",
+    "total_fee": "USD 55,000",
+    "payment_schedule": "50% at kickoff, 50% net 7 after handoff",
+    "assumption_1": "Client provides repository access and a technical point of contact within 2 business days.",
+    "assumption_2": "Client codebase remains materially stable during the sprint window.",
+    "provider_signatory": "Cody Mitchell",
+    "client_signatory": "Authorized Client Signatory"
+  }
+}
