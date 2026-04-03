@@ -1,5 +1,7 @@
 # CPAMM Lean
 
+Maintained by SproutSeeds. Research stewardship: Fractal Research Group ([frg.earth](https://frg.earth)).
+
 [![CI](https://github.com/SproutSeeds/cpamm-lean/actions/workflows/ci.yml/badge.svg)](https://github.com/SproutSeeds/cpamm-lean/actions/workflows/ci.yml)
 
 Formally verified constant-product AMM artifact:
